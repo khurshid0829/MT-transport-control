@@ -7,7 +7,10 @@ export const createCarSchema = z
     tur: z.enum(['Isuzu 10t', 'Isuzu 5t', 'Changan', 'Labo']),
     davlat_raqami: z
       .string()
-      .regex(/^\d{2}[A-Z]\d{3}[A-Z]{2}$/, "Avto raqami formati noto'g'ri (masalan: 01A111AA)"),
+      .regex(
+        /^\d{2}([A-Z]\d{3}[A-Z]{2}|\d{3}[A-Z]{3})$/,
+        "Avto raqami formati noto'g'ri (masalan: 01A111AA yoki 01111ABC)"
+      ),
     ishlab_chiqarilgan_yili: z.number().int().min(1980).max(currentYear + 1),
     boshlangich_yurgan_masofasi: z.number().int().min(0),
     joriy_yurgan_masofasi: z.number().int().min(0),
