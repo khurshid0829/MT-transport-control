@@ -53,3 +53,6 @@ export function canManageUsers(role: UserRole | undefined): boolean {
 export function canViewAudit(role: UserRole | undefined): boolean {
   return role === 'FOUNDER';
 }
+export function canViewReports(role: UserRole | undefined): boolean {
+  return role === 'FOUNDER' || role === 'MANAGER' || role === 'CHIEF_MECHANIC';
+}

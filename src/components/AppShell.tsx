@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { AuthUser, getToken, getUser, clearSession, canViewAudit, canManageUsers } from '@/lib/auth-client';
+import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
 
 const ROLE_LABELS: Record<string, string> = {
   FOUNDER: 'Asoschi',
@@ -59,7 +59,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/cars', label: 'Avtolar' },
     { href: '/drivers', label: 'Haydovchilar' },
     { href: '/transactions', label: 'Tranzaksiyalar' },
-    { href: '/reports', label: 'Hisobotlar' },
+    ...(canViewReports(user.rol) ? [{ href: '/reports', label: 'Hisobotlar' }] : []),
     ...(canViewAudit(user.rol) ? [{ href: '/audit', label: 'Audit log' }] : []),
     ...(canManageUsers(user.rol) ? [{ href: '/users', label: 'Foydalanuvchilar' }] : []),
   ];
