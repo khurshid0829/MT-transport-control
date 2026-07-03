@@ -6,12 +6,12 @@ export const reportsService = {
    * Har bir valyuta (UZS, USD) uchun alohida guruhlanadi.
    */
   async compareByCurrency(filters: Record<string, any>) {
-    const conditions: string[] = [];
+    const conditions: string[] = ['bekor_qilindi = false'];
     const values: unknown[] = [];
     if (filters.dan) { values.push(filters.dan); conditions.push(`created_at >= $${values.length}`); }
     if (filters.gacha) { values.push(filters.gacha); conditions.push(`created_at <= $${values.length}`); }
     if (filters.avto_id) { values.push(filters.avto_id); conditions.push(`avto_id = $${values.length}`); }
-    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const where = `WHERE ${conditions.join(' AND ')}`;
 
     const result = await pool.query(
       `SELECT valyuta, turi, COALESCE(SUM(summa), 0) AS jami_summa, COUNT(*) AS amallar_soni
@@ -52,7 +52,7 @@ export const reportsService = {
   },
 
   async expensesByType(filters: Record<string, any>) {
-    const conditions: string[] = ["turi = 'Chiqim'"];
+    const conditions: string[] = ["turi = 'Chiqim'", 'bekor_qilindi = false'];
     const values: unknown[] = [];
     if (filters.dan) { values.push(filters.dan); conditions.push(`created_at >= $${values.length}`); }
     if (filters.gacha) { values.push(filters.gacha); conditions.push(`created_at <= $${values.length}`); }

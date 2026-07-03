@@ -10,14 +10,14 @@ import { updateCarSchema } from '@/validators/cars.validators';
 import { carsService } from '@/services/cars.service';
 
 export const GET = apiHandler(async (req: NextRequest, { params }) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'cars', 'read');
   const car = await carsService.getById(Number(params.id));
   return ok(car);
 });
 
 export const PUT = apiHandler(async (req: NextRequest, { params }) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'cars', 'update');
 
   const body = updateCarSchema.safeParse(await req.json());

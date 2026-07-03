@@ -10,7 +10,7 @@ import { createCarSchema } from '@/validators/cars.validators';
 import { carsService } from '@/services/cars.service';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'cars', 'read');
 
   const { searchParams } = new URL(req.url);
@@ -22,7 +22,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
 });
 
 export const POST = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'cars', 'create');
 
   const body = createCarSchema.safeParse(await req.json());

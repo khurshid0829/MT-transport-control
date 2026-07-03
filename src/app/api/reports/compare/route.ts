@@ -8,7 +8,7 @@ import { requirePermission } from '@/permissions/permissions';
 import { reportsService } from '@/services/reports.service';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'reports', 'read');
   const { searchParams } = new URL(req.url);
   const filters = Object.fromEntries(searchParams.entries());

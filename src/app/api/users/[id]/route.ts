@@ -10,7 +10,7 @@ import { updateUserStatusSchema } from '@/validators/users.validators';
 import { usersService } from '@/services/users.service';
 
 export const PUT = apiHandler(async (req: NextRequest, { params }) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'users', 'update');
 
   const body = updateUserStatusSchema.safeParse(await req.json());

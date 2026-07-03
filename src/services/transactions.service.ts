@@ -38,10 +38,27 @@ export const transactionsService = {
     });
   },
 
+  /**
+   * MUHIM (audit topilmasi): tranzaksiyalar HECH QACHON bazadan haqiqiy
+   * o'chirilmaydi — moliyaviy audit talabiga ko'ra har bir yozuv (hatto
+   * xato bo'lsa ham) tarixda saqlanishi kerak. Buning o'rniga
+   * "bekor_qilindi = true" deb belgilanadi; bu UPDATE trigger orqali
+   * audit_log'ga eski/yangi holat bilan avtomatik yoziladi.
+   */
   async remove(id: number, userId: number) {
     return withTransaction(userId, async (client) => {
-      const result = await client.query('DELETE FROM transactions WHERE id = $1 RETURNING id', [id]);
-      if (!result.rows[0]) throw AppError.notFound(`Tranzaksiya (id=${id}) topilmadi`);
+      const existing = await client.query('SELECT id, bekor_qilindi FROM transactions WHERE id = $1', [id]);
+      if (!existing.rows[0]) throw AppError.notFound(`Tranzaksiya (id=${id}) topilmadi`);
+      if (existing.rows[0].bekor_qilindi) {
+        throw AppError.conflict('Bu tranzaksiya allaqachon bekor qilingan');
+      }
+      const result = await client.query(
+        `UPDATE transactions
+         SET bekor_qilindi = true, bekor_qilingan_vaqt = CURRENT_TIMESTAMP, bekor_qilgan_user_id = $2
+         WHERE id = $1 RETURNING *`,
+        [id, userId]
+      );
+      return result.rows[0];
     });
   },
 };

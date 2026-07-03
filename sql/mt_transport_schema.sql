@@ -311,3 +311,39 @@ CREATE TRIGGER trg_audit_users
     AFTER UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION log_audit_trail();
+
+-- =====================================================================
+-- 14. AUDIT TUZATISHLARI (moliyaviy audit ko'rib chiqishi asosida)
+-- =====================================================================
+
+-- 14.1) Tranzaksiyalar HECH QACHON haqiqiy o'chirilmaydi (moliyaviy audit
+--       talabi) — faqat "bekor qilingan" deb belgilanadi. Bu izsiz
+--       yo'qolishning oldini oladi va kim/qachon bekor qilganini saqlaydi.
+ALTER TABLE transactions
+    ADD COLUMN bekor_qilindi BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN bekor_qilingan_vaqt TIMESTAMP,
+    ADD COLUMN bekor_qilgan_user_id INT REFERENCES users(id);
+
+-- 14.2) DELETE amali ham audit_log'ga yozilishi shart (avval faqat
+--       INSERT/UPDATE yozilar edi — endi har qanday to'g'ridan-to'g'ri
+--       bazaviy DELETE ham iz qoldiradi, himoyaning qo'shimcha qatlami)
+DROP TRIGGER IF EXISTS trg_audit_cars ON cars;
+CREATE TRIGGER trg_audit_cars
+    AFTER INSERT OR UPDATE OR DELETE ON cars
+    FOR EACH ROW
+    EXECUTE FUNCTION log_audit_trail();
+
+DROP TRIGGER IF EXISTS trg_audit_transactions ON transactions;
+CREATE TRIGGER trg_audit_transactions
+    AFTER INSERT OR UPDATE OR DELETE ON transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION log_audit_trail();
+
+-- 14.3) Avtoni o'chirish uning tranzaksiya tarixini avtomatik yo'q
+--       qilmasligi kerak (CASCADE xavfli) — endi tranzaksiyasi bor avtoni
+--       o'chirib bo'lmaydi (RESTRICT), avval uning tarixi ko'rib chiqilishi
+--       yoki avto shunchaki "Nosoz"/nofaol holatga o'tkazilishi kerak.
+ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_avto_id_fkey;
+ALTER TABLE transactions
+    ADD CONSTRAINT transactions_avto_id_fkey
+    FOREIGN KEY (avto_id) REFERENCES cars(id) ON DELETE RESTRICT;

@@ -14,6 +14,7 @@ interface Tx {
   amaldagi_yurgan_masofa: number | null;
   tavsif: string | null;
   created_at: string;
+  bekor_qilindi: boolean;
 }
 interface Car { id: number; davlat_raqami: string; tur: string; }
 
@@ -73,10 +74,11 @@ export default function TransactionsPage() {
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Haqiqatan ham o'chirmoqchimisiz?")) return;
+  async function handleCancel(id: number) {
+    if (!confirm("Bu tranzaksiyani bekor qilmoqchimisiz? (Yozuv tarixda saqlanib qoladi, faqat 'bekor qilingan' deb belgilanadi)")) return;
     const res = await apiFetch('/api/transactions/' + id, { method: 'DELETE' });
     if (res.success) loadAll();
+    else alert(res.error?.message || 'Xatolik yuz berdi');
   }
 
   function carLabel(id: number | null) {
@@ -172,17 +174,22 @@ export default function TransactionsPage() {
             </thead>
             <tbody>
               {txs.map((t) => (
-                <tr key={t.id}>
+                <tr key={t.id} style={t.bekor_qilindi ? { opacity: 0.5 } : undefined}>
                   <td>{new Date(t.created_at).toLocaleDateString()}</td>
-                  <td><span className={'badge ' + (t.turi === 'Kirim' ? 'badge-success' : 'badge-danger')}>{t.turi}</span></td>
+                  <td>
+                    <span className={'badge ' + (t.turi === 'Kirim' ? 'badge-success' : 'badge-danger')}>{t.turi}</span>
+                    {t.bekor_qilindi && <span className="badge badge-neutral" style={{ marginLeft: 6 }}>Bekor qilingan</span>}
+                  </td>
                   <td>{t.valyuta}</td>
-                  <td>{Number(t.summa).toLocaleString()}</td>
+                  <td style={t.bekor_qilindi ? { textDecoration: 'line-through' } : undefined}>{Number(t.summa).toLocaleString()}</td>
                   <td>{t.xarajat_turi}</td>
                   <td>{carLabel(t.avto_id)}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{t.tavsif || '—'}</td>
                   {canWrite && (
                     <td>
-                      <button className="btn btn-danger" style={{ padding: '5px 10px' }} onClick={() => handleDelete(t.id)}>O'chirish</button>
+                      {!t.bekor_qilindi && (
+                        <button className="btn btn-danger" style={{ padding: '5px 10px' }} onClick={() => handleCancel(t.id)}>Bekor qilish</button>
+                      )}
                     </td>
                   )}
                 </tr>

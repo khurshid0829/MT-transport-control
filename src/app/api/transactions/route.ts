@@ -11,7 +11,7 @@ import { transactionsService } from '@/services/transactions.service';
 
 // O'QISH — barcha rollar (FOUNDER, MANAGER, CHIEF_MECHANIC, MECHANIC)
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'transactions', 'read');
 
   const { searchParams } = new URL(req.url);
@@ -23,7 +23,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
 // requirePermission bu yerda MECHANIC'ni ham, FOUNDER/MANAGER'ni ham
 // 403 Forbidden bilan avtomatik bloklaydi (permissions.ts matritsasiga ko'ra).
 export const POST = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'transactions', 'create');
 
   const body = createTransactionSchema.safeParse(await req.json());

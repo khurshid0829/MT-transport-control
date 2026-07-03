@@ -10,13 +10,13 @@ import { createDriverSchema } from '@/validators/drivers.validators';
 import { driversService } from '@/services/drivers.service';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'drivers', 'read');
   return ok(await driversService.list());
 });
 
 export const POST = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'drivers', 'create');
   const body = createDriverSchema.safeParse(await req.json());
   if (!body.success) throw AppError.badRequest("Ma'lumotlar noto'g'ri", body.error.flatten());

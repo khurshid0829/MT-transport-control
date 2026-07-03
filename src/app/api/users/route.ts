@@ -8,7 +8,7 @@ import { requirePermission } from '@/permissions/permissions';
 import { usersService } from '@/services/users.service';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'users', 'read');
   return ok(await usersService.list());
 });

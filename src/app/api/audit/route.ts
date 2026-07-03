@@ -9,7 +9,7 @@ import { auditService } from '@/services/audit.service';
 
 // Faqat FOUNDER (permissions.ts: audit.read)
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'audit', 'read');
 
   const { searchParams } = new URL(req.url);

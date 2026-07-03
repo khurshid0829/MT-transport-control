@@ -10,7 +10,7 @@ import { createRateSchema } from '@/validators/exchange-rates.validators';
 import { exchangeRatesService } from '@/services/exchange-rates.service';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'exchange_rates', 'read');
   const { searchParams } = new URL(req.url);
   const latestOnly = searchParams.get('latest') === 'true';
@@ -23,7 +23,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
 });
 
 export const POST = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'exchange_rates', 'create');
 
   const body = createRateSchema.safeParse(await req.json());

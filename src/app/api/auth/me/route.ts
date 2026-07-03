@@ -6,6 +6,6 @@ import { ok } from '@/lib/response';
 import { getAuthUser } from '@/lib/auth';
 
 export const GET = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   return ok(user);
 });

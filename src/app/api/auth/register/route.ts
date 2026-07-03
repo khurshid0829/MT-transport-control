@@ -11,7 +11,7 @@ import { authService } from '@/services/auth.service';
 
 // Faqat FOUNDER yangi foydalanuvchi qo'sha oladi (permissions.ts: users.create)
 export const POST = apiHandler(async (req: NextRequest) => {
-  const user = getAuthUser(req);
+  const user = await getAuthUser(req);
   requirePermission(user.rol, 'users', 'create');
 
   const body = registerSchema.safeParse(await req.json());
