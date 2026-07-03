@@ -280,3 +280,25 @@ COMMIT;
 --    barchasi backend (ilova) qatlamida amalga oshiriladi, bu skript
 --    faqat ma'lumotlar bazasi tuzilmasini ta'minlaydi.
 -- =====================================================================
+
+-- =====================================================================
+-- 12. EXCHANGE_RATES — valyuta kursi tarixi (4-qoidaga qo'shimcha modul)
+--     MUHIM: bu jadval UZS/USD'ni "qo'shish" uchun emas — faqat
+--     KO'RSATISH maqsadida ixtiyoriy konvertatsiya qiymati berish uchun.
+--     Xom (raw) UZS va USD summalar har doim alohida-alohida saqlanadi
+--     va hisoblanadi (4-qoida o'zgarmaydi).
+-- =====================================================================
+CREATE TABLE exchange_rates (
+    id                  SERIAL PRIMARY KEY,
+    kurs                NUMERIC(15,4) NOT NULL CHECK (kurs > 0), -- 1 USD = necha UZS
+    amal_qilish_sanasi  DATE NOT NULL DEFAULT CURRENT_DATE,
+    kim_kiritdi         INT REFERENCES users(id),
+    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_exchange_rates_sana ON exchange_rates (amal_qilish_sanasi DESC);
+
+CREATE TRIGGER trg_audit_exchange_rates
+    AFTER INSERT ON exchange_rates
+    FOR EACH ROW
+    EXECUTE FUNCTION log_audit_trail();

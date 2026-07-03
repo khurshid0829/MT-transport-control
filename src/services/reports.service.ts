@@ -30,8 +30,23 @@ export const reportsService = {
       grouped[currency].sof_balans = grouped[currency].kirim - grouped[currency].chiqim;
     }
 
+    // Joriy kursni olamiz (agar kiritilgan bo'lsa) — UZS/USD HECH QACHON
+    // avtomatik qo'shilmaydi (4-qoida); faqat qulaylik uchun qo'shimcha,
+    // alohida "ekvivalent" maydoni beriladi.
+    const rateResult = await pool.query(
+      `SELECT kurs FROM exchange_rates ORDER BY amal_qilish_sanasi DESC, created_at DESC LIMIT 1`
+    );
+    const joriyKurs = rateResult.rows[0]?.kurs ? Number(rateResult.rows[0].kurs) : null;
+
+    let usdSofBalansUzsda: number | null = null;
+    if (joriyKurs && grouped.USD) {
+      usdSofBalansUzsda = Math.round(grouped.USD.sof_balans * joriyKurs);
+    }
+
     return {
       valyutalar: grouped,
+      joriy_kurs: joriyKurs,
+      usd_sof_balans_uzs_ekvivalentida: usdSofBalansUzsda,
       eslatma: "Har bir valyuta alohida hisoblangan. UZS va USD summalari birlashtirilmagan.",
     };
   },

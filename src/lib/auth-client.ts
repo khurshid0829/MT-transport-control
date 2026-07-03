@@ -47,6 +47,9 @@ export function canWriteTransactions(role: UserRole | undefined): boolean {
 export function canWriteCars(role: UserRole | undefined): boolean {
   return role === 'FOUNDER' || role === 'MANAGER';
 }
+export function canSetExchangeRate(role: UserRole | undefined): boolean {
+  return role === 'FOUNDER' || role === 'MANAGER';
+}
 export function canManageUsers(role: UserRole | undefined): boolean {
   return role === 'FOUNDER';
 }

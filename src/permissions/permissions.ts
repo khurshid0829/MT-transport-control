@@ -1,7 +1,7 @@
 import { UserRole } from '../lib/auth';
 import { AppError } from '../lib/AppError';
 
-export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports';
+export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates';
 export type Action = 'create' | 'read' | 'update' | 'delete';
 
 /**
@@ -42,6 +42,10 @@ const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
   },
   reports: {
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC'],
+  },
+  exchange_rates: {
+    create: ['FOUNDER', 'MANAGER'],
+    read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
 };
 
