@@ -35,7 +35,7 @@ export default function AuditPage() {
         ) : rows.length === 0 ? (
           <div className="empty-state">Hali yozuv yo'q.</div>
         ) : (
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr><th>Vaqt</th><th>Kim</th><th>Harakat</th><th></th></tr>
             </thead>
@@ -43,10 +43,10 @@ export default function AuditPage() {
               {rows.map((r) => (
                 <>
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
-                    <td>{new Date(r.vaqt).toLocaleString()}</td>
-                    <td>{r.foydalanuvchi || '—'} {r.rol && <span className="badge badge-neutral">{r.rol}</span>}</td>
-                    <td><b style={{ color: 'var(--accent)' }}>{r.harakat}</b></td>
-                    <td>{expanded === r.id ? '▲' : '▼'}</td>
+                    <td data-label="Vaqt">{new Date(r.vaqt).toLocaleString()}</td>
+                    <td data-label="Kim">{r.foydalanuvchi || '—'} {r.rol && <span className="badge badge-neutral">{r.rol}</span>}</td>
+                    <td data-label="Harakat"><b style={{ color: 'var(--accent)' }}>{r.harakat}</b></td>
+                    <td data-label="">{expanded === r.id ? '▲' : '▼'}</td>
                   </tr>
                   {expanded === r.id && (
                     <tr key={r.id + '-detail'}>

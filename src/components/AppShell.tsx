@@ -2,27 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard, Truck, Users as UsersIcon, Receipt, BarChart3,
+  History, UserCog, LogOut, MoreHorizontal, X,
+} from 'lucide-react';
 import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
+import Logo from './Logo';
 
 const ROLE_LABELS: Record<string, string> = {
-  FOUNDER: 'Asoschi',
-  MANAGER: 'Menejer',
-  CHIEF_MECHANIC: 'Bosh mexanik',
-  MECHANIC: 'Mexanik',
+  FOUNDER: 'Asoschi', MANAGER: 'Menejer', CHIEF_MECHANIC: 'Bosh mexanik', MECHANIC: 'Mexanik',
 };
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function SidebarLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: any; active: boolean }) {
   return (
     <a
       href={href}
       style={{
-        display: 'block', padding: '9px 14px', borderRadius: 6, marginBottom: 2,
+        display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, marginBottom: 2,
         color: active ? 'var(--sidebar-text-active)' : 'var(--sidebar-text)',
         background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
-        borderLeft: active ? '3px solid var(--sidebar-accent)' : '3px solid transparent',
-        fontWeight: active ? 600 : 400, textDecoration: 'none', fontSize: 13.5,
+        textDecoration: 'none', fontSize: 13.5, fontWeight: active ? 600 : 400,
       }}
     >
+      <Icon size={17} strokeWidth={2} />
       {label}
     </a>
   );
@@ -33,6 +35,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checked, setChecked] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -54,46 +57,94 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   }
 
-  const navItems = [
-    { href: '/dashboard', label: 'Bosh sahifa' },
-    { href: '/cars', label: 'Avtolar' },
-    { href: '/drivers', label: 'Haydovchilar' },
-    { href: '/transactions', label: 'Tranzaksiyalar' },
-    ...(canViewReports(user.rol) ? [{ href: '/reports', label: 'Hisobotlar' }] : []),
-    ...(canViewAudit(user.rol) ? [{ href: '/audit', label: 'Audit log' }] : []),
-    ...(canManageUsers(user.rol) ? [{ href: '/users', label: 'Foydalanuvchilar' }] : []),
-  ];
+  const allItems = [
+    { href: '/dashboard', label: 'Bosh sahifa', icon: LayoutDashboard, show: true },
+    { href: '/cars', label: 'Avtolar', icon: Truck, show: true },
+    { href: '/drivers', label: 'Haydovchilar', icon: UsersIcon, show: true },
+    { href: '/transactions', label: 'Tranzaksiya', icon: Receipt, show: true },
+    { href: '/reports', label: 'Hisobotlar', icon: BarChart3, show: canViewReports(user.rol) },
+    { href: '/audit', label: 'Audit log', icon: History, show: canViewAudit(user.rol) },
+    { href: '/users', label: 'Foydalanuvchilar', icon: UserCog, show: canManageUsers(user.rol) },
+  ].filter((i) => i.show);
+
+  const primaryMobile = allItems.slice(0, 4);
+  const moreMobile = allItems.slice(4);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={{ width: 220, background: 'var(--sidebar-bg)', padding: '20px 14px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px', marginBottom: 28 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 7, background: 'var(--accent)', color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12,
-          }}>MT</div>
-          <span style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>M-T Transport</span>
+      <aside className="desktop-sidebar" style={{ width: 220, background: 'var(--sidebar-bg)', padding: '20px 14px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '0 6px', marginBottom: 28 }}>
+          <Logo size={28} />
+          <span style={{ color: '#fff', fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>M-T Transport</span>
         </div>
 
         <nav>
-          {navItems.map((item) => (
-            <NavLink key={item.href} href={item.href} label={item.label} active={pathname === item.href} />
+          {allItems.map((item) => (
+            <SidebarLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={pathname === item.href} />
           ))}
         </nav>
       </aside>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <header style={{
           height: 56, borderBottom: '1px solid var(--border)', background: 'var(--surface)',
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 24px', gap: 12,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', gap: 12,
         }}>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {user.ism_sharif} · <span className="badge badge-neutral">{ROLE_LABELS[user.rol] || user.rol}</span>
-          </span>
-          <button className="btn" onClick={handleLogout}>Chiqish</button>
+          <div className="mobile-only-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Logo size={24} />
+            <span style={{ fontWeight: 600, fontSize: 14 }}>M-T Transport</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              {user.ism_sharif} · <span className="badge badge-neutral">{ROLE_LABELS[user.rol] || user.rol}</span>
+            </span>
+            <button className="btn" onClick={handleLogout}><LogOut size={15} /> Chiqish</button>
+          </div>
         </header>
-        <main style={{ flex: 1, padding: 28 }}>{children}</main>
+
+        <main className="app-main-content" style={{ flex: 1, padding: 24 }}>{children}</main>
       </div>
+
+      {/* Mobil pastki tab-bar */}
+      <nav className="mobile-tabbar">
+        {primaryMobile.map((item) => (
+          <a key={item.href} href={item.href} className={'tabbar-item' + (pathname === item.href ? ' active' : '')}>
+            <item.icon size={20} strokeWidth={pathname === item.href ? 2.3 : 1.8} />
+            {item.label}
+          </a>
+        ))}
+        {moreMobile.length > 0 && (
+          <button className="tabbar-item" style={{ background: 'none', border: 'none' }} onClick={() => setMoreOpen(true)}>
+            <MoreHorizontal size={20} strokeWidth={1.8} />
+            Ko'proq
+          </button>
+        )}
+      </nav>
+
+      {moreOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(20,24,31,0.4)', zIndex: 60, display: 'flex', alignItems: 'flex-end' }}
+          onClick={() => setMoreOpen(false)}
+        >
+          <div
+            style={{ background: 'var(--surface)', width: '100%', borderRadius: '16px 16px 0 0', padding: 16, paddingBottom: 32 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h2>Ko'proq</h2>
+              <button className="btn" style={{ padding: 6 }} onClick={() => setMoreOpen(false)}><X size={16} /></button>
+            </div>
+            {moreMobile.map((item) => (
+              <a key={item.href} href={item.href} style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px',
+                color: 'var(--text-primary)', textDecoration: 'none', fontSize: 14, borderBottom: '1px solid var(--border)',
+              }}>
+                <item.icon size={18} /> {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

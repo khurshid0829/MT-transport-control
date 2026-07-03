@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveSession } from '@/lib/auth-client';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,11 +40,9 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--sidebar-bg)' }}>
       <div className="card" style={{ width: 380 }}>
         <div style={{ marginBottom: 24, textAlign: 'center' }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 10, background: 'var(--accent)', color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700,
-            fontSize: 18, margin: '0 auto 12px',
-          }}>MT</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
+            <Logo size={48} />
+          </div>
           <h1>M-T Transport</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: 4 }}>Boshqaruv tizimiga kirish</p>
         </div>

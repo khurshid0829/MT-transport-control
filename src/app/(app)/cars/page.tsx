@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { getUser, canWriteCars } from '@/lib/auth-client';
+import { formatNumber } from '@/lib/format';
+import NumberInput from '@/components/NumberInput';
 
 interface Car {
   id: number;
@@ -104,11 +106,11 @@ export default function CarsPage() {
               </div>
               <div className="field">
                 <label>Boshlang'ich masofa (km)</label>
-                <input type="number" value={form.boshlangich_yurgan_masofasi} onChange={(e) => setForm({ ...form, boshlangich_yurgan_masofasi: Number(e.target.value) })} required />
+                <NumberInput value={form.boshlangich_yurgan_masofasi} onChange={(v) => setForm({ ...form, boshlangich_yurgan_masofasi: v })} required />
               </div>
               <div className="field">
                 <label>Joriy masofa (km)</label>
-                <input type="number" value={form.joriy_yurgan_masofasi} onChange={(e) => setForm({ ...form, joriy_yurgan_masofasi: Number(e.target.value) })} required />
+                <NumberInput value={form.joriy_yurgan_masofasi} onChange={(v) => setForm({ ...form, joriy_yurgan_masofasi: v })} required />
               </div>
             </div>
             <button type="submit" className="btn btn-primary" disabled={saving}>
@@ -124,7 +126,7 @@ export default function CarsPage() {
         ) : cars.length === 0 ? (
           <div className="empty-state">Hali avto qo'shilmagan.</div>
         ) : (
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Turi</th><th>Davlat raqami</th><th>Yili</th><th>Boshlang'ich (km)</th>
@@ -134,12 +136,12 @@ export default function CarsPage() {
             <tbody>
               {cars.map((c) => (
                 <tr key={c.id}>
-                  <td>{c.tur}</td>
-                  <td>{c.davlat_raqami}</td>
-                  <td>{c.ishlab_chiqarilgan_yili}</td>
-                  <td>{c.boshlangich_yurgan_masofasi.toLocaleString()}</td>
-                  <td>{c.joriy_yurgan_masofasi.toLocaleString()}</td>
-                  <td>
+                  <td data-label="Turi">{c.tur}</td>
+                  <td data-label="Davlat raqami">{c.davlat_raqami}</td>
+                  <td data-label="Yili">{c.ishlab_chiqarilgan_yili}</td>
+                  <td data-label="Boshlang'ich (km)">{formatNumber(c.boshlangich_yurgan_masofasi)}</td>
+                  <td data-label="Joriy (km)">{formatNumber(c.joriy_yurgan_masofasi)}</td>
+                  <td data-label="Holati">
                     {canWrite ? (
                       <select value={c.texnik_holat} onChange={(e) => handleStatusChange(c.id, e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 6 }}>
                         {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { canSetExchangeRate, getUser } from '@/lib/auth-client';
+import { formatNumber } from '@/lib/format';
+import NumberInput from '@/components/NumberInput';
 
 interface CurrencyStat { kirim: number; chiqim: number; sof_balans: number; amallar_soni: number; }
 interface CompareData {
@@ -61,14 +63,12 @@ export default function ReportsPage() {
           <h3 style={{ marginBottom: 10 }}>Joriy kurs (1 USD = ? UZS)</h3>
           {rateError && <div className="alert alert-error">{rateError}</div>}
           <p style={{ marginBottom: 10 }}>
-            Hozirgi: <b>{data?.joriy_kurs ? data.joriy_kurs.toLocaleString() + ' UZS' : 'kiritilmagan'}</b>
+            Hozirgi: <b>{data?.joriy_kurs ? formatNumber(data.joriy_kurs) + ' UZS' : 'kiritilmagan'}</b>
           </p>
           <form onSubmit={handleSetRate} style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="number" step="0.01" placeholder="masalan: 12700"
-              value={rateForm} onChange={(e) => setRateForm(e.target.value)}
-              style={{ padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, flex: 1 }}
-            />
+            <div style={{ flex: 1 }}>
+              <NumberInput value={rateForm} onChange={(v) => setRateForm(String(v))} placeholder="masalan: 12 700" />
+            </div>
             <button type="submit" className="btn btn-primary" disabled={rateSaving}>
               {rateSaving ? 'Saqlanmoqda...' : 'Yangilash'}
             </button>
@@ -90,21 +90,21 @@ export default function ReportsPage() {
                   <h3>{cur}</h3>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                     <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Kirim</span>
-                    <span style={{ color: 'var(--success)', fontWeight: 600 }}>{v.kirim.toLocaleString()}</span>
+                    <span style={{ color: 'var(--success)', fontWeight: 600 }}>{formatNumber(v.kirim)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                     <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Chiqim</span>
-                    <span style={{ color: 'var(--danger)', fontWeight: 600 }}>{v.chiqim.toLocaleString()}</span>
+                    <span style={{ color: 'var(--danger)', fontWeight: 600 }}>{formatNumber(v.chiqim)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>Sof balans</span>
                     <span style={{ fontWeight: 700, color: v.sof_balans >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                      {v.sof_balans.toLocaleString()}
+                      {formatNumber(v.sof_balans)}
                     </span>
                   </div>
                   {cur === 'USD' && data!.usd_sof_balans_uzs_ekvivalentida !== null && (
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-                      ≈ {data!.usd_sof_balans_uzs_ekvivalentida!.toLocaleString()} UZS (joriy kurs bo'yicha, taxminiy)
+                      ≈ {formatNumber(data!.usd_sof_balans_uzs_ekvivalentida!)} UZS (joriy kurs bo'yicha, taxminiy)
                     </p>
                   )}
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{v.amallar_soni} ta amal</p>

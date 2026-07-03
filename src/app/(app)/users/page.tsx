@@ -102,20 +102,20 @@ export default function UsersPage() {
         {loading ? (
           <div className="empty-state">Yuklanmoqda...</div>
         ) : (
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr><th>Ism sharifi</th><th>Username</th><th>Rol</th><th>Holati</th><th></th></tr>
             </thead>
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td>{u.ism_sharif}</td>
-                  <td>{u.username}</td>
-                  <td><span className="badge badge-neutral">{ROLE_LABELS[u.rol] || u.rol}</span></td>
-                  <td>
+                  <td data-label="Ism sharifi">{u.ism_sharif}</td>
+                  <td data-label="Username">{u.username}</td>
+                  <td data-label="Rol"><span className="badge badge-neutral">{ROLE_LABELS[u.rol] || u.rol}</span></td>
+                  <td data-label="Holati">
                     <span className={'badge ' + (u.status === 'Aktiv' ? 'badge-success' : 'badge-danger')}>{u.status}</span>
                   </td>
-                  <td>
+                  <td data-label="">
                     {u.id !== currentUser?.id && (
                       <button
                         className={'btn ' + (u.status === 'Aktiv' ? 'btn-danger' : '')}

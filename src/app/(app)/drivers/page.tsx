@@ -108,18 +108,18 @@ export default function DriversPage() {
         ) : drivers.length === 0 ? (
           <div className="empty-state">Hali haydovchi qo'shilmagan.</div>
         ) : (
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr><th>Ism sharifi</th><th>Telefon</th><th>Biriktirilgan avto</th>{canWrite && <th></th>}</tr>
             </thead>
             <tbody>
               {drivers.map((d) => (
                 <tr key={d.id}>
-                  <td>{d.ism_sharif}</td>
-                  <td>{d.telefon_raqam}</td>
-                  <td>{d.avto_davlat_raqami || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
+                  <td data-label="Ism sharifi">{d.ism_sharif}</td>
+                  <td data-label="Telefon">{d.telefon_raqam}</td>
+                  <td data-label="Avto">{d.avto_davlat_raqami || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                   {canWrite && (
-                    <td>
+                    <td data-label="">
                       <button className="btn btn-danger" style={{ padding: '5px 10px' }} onClick={() => handleDelete(d.id)}>O'chirish</button>
                     </td>
                   )}

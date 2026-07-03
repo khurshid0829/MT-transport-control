@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { getUser, canWriteTransactions } from '@/lib/auth-client';
+import { formatNumber } from '@/lib/format';
+import NumberInput from '@/components/NumberInput';
 
 interface Tx {
   id: number;
@@ -124,7 +126,7 @@ export default function TransactionsPage() {
               </div>
               <div className="field">
                 <label>Summa</label>
-                <input type="number" value={form.summa} onChange={(e) => setForm({ ...form, summa: e.target.value })} required min="0" step="0.01" />
+                <NumberInput value={form.summa} onChange={(v) => setForm({ ...form, summa: String(v) })} required />
               </div>
               <div className="field">
                 <label>Xarajat turi</label>
@@ -144,7 +146,7 @@ export default function TransactionsPage() {
               {needsMileage && (
                 <div className="field">
                   <label>Amaldagi masofa (odometr, km)</label>
-                  <input type="number" value={form.amaldagi_yurgan_masofa} onChange={(e) => setForm({ ...form, amaldagi_yurgan_masofa: e.target.value })} required min="0" />
+                  <NumberInput value={form.amaldagi_yurgan_masofa} onChange={(v) => setForm({ ...form, amaldagi_yurgan_masofa: String(v) })} required />
                 </div>
               )}
               <div className="field" style={{ gridColumn: '1 / -1' }}>
@@ -165,7 +167,7 @@ export default function TransactionsPage() {
         ) : txs.length === 0 ? (
           <div className="empty-state">Hali tranzaksiya kiritilmagan.</div>
         ) : (
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Sana</th><th>Turi</th><th>Valyuta</th><th>Summa</th><th>Xarajat turi</th>
@@ -175,18 +177,18 @@ export default function TransactionsPage() {
             <tbody>
               {txs.map((t) => (
                 <tr key={t.id} style={t.bekor_qilindi ? { opacity: 0.5 } : undefined}>
-                  <td>{new Date(t.created_at).toLocaleDateString()}</td>
-                  <td>
+                  <td data-label="Sana">{new Date(t.created_at).toLocaleDateString()}</td>
+                  <td data-label="Turi">
                     <span className={'badge ' + (t.turi === 'Kirim' ? 'badge-success' : 'badge-danger')}>{t.turi}</span>
                     {t.bekor_qilindi && <span className="badge badge-neutral" style={{ marginLeft: 6 }}>Bekor qilingan</span>}
                   </td>
-                  <td>{t.valyuta}</td>
-                  <td style={t.bekor_qilindi ? { textDecoration: 'line-through' } : undefined}>{Number(t.summa).toLocaleString()}</td>
-                  <td>{t.xarajat_turi}</td>
-                  <td>{carLabel(t.avto_id)}</td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{t.tavsif || '—'}</td>
+                  <td data-label="Valyuta">{t.valyuta}</td>
+                  <td data-label="Summa" style={t.bekor_qilindi ? { textDecoration: 'line-through' } : undefined}>{formatNumber(t.summa)}</td>
+                  <td data-label="Xarajat turi">{t.xarajat_turi}</td>
+                  <td data-label="Avto">{carLabel(t.avto_id)}</td>
+                  <td data-label="Tavsif" style={{ color: 'var(--text-secondary)' }}>{t.tavsif || '—'}</td>
                   {canWrite && (
-                    <td>
+                    <td data-label="">
                       {!t.bekor_qilindi && (
                         <button className="btn btn-danger" style={{ padding: '5px 10px' }} onClick={() => handleCancel(t.id)}>Bekor qilish</button>
                       )}
