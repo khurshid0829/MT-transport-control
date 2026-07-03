@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api-client';
 import { getUser, canWriteCars } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
+import PlateNumberInput from '@/components/PlateNumberInput';
 
 interface Car {
   id: number;
@@ -56,6 +57,10 @@ export default function CarsPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (form.davlat_raqami.length !== 8) {
+      setError("Davlat raqami to'liq kiritilmagan (masalan: 01 A 111 AA)");
+      return;
+    }
     setSaving(true);
     const res = await apiFetch<Car>('/api/cars', { method: 'POST', body: JSON.stringify(form) });
     setSaving(false);
@@ -75,7 +80,7 @@ export default function CarsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h1>Avtolar ({cars.length})</h1>
         {canWrite && (
           <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
@@ -89,7 +94,7 @@ export default function CarsPage() {
           <h2 style={{ marginBottom: 14 }}>Yangi avto qo'shish</h2>
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
               <div className="field">
                 <label>Turi</label>
                 <select value={form.tur} onChange={(e) => setForm({ ...form, tur: e.target.value })}>
@@ -98,7 +103,7 @@ export default function CarsPage() {
               </div>
               <div className="field">
                 <label>Davlat raqami</label>
-                <input value={form.davlat_raqami} onChange={(e) => setForm({ ...form, davlat_raqami: e.target.value })} required />
+                <PlateNumberInput value={form.davlat_raqami} onChange={(v) => setForm({ ...form, davlat_raqami: v })} />
               </div>
               <div className="field">
                 <label>Ishlab chiqarilgan yili</label>

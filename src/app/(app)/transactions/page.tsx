@@ -91,7 +91,7 @@ export default function TransactionsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h1>Tranzaksiyalar ({txs.length})</h1>
         {canWrite ? (
           <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
@@ -109,7 +109,7 @@ export default function TransactionsPage() {
           <h2 style={{ marginBottom: 14 }}>Yangi tranzaksiya</h2>
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
               <div className="field">
                 <label>Turi</label>
                 <select value={form.turi} onChange={(e) => setForm({ ...form, turi: e.target.value, xarajat_turi: e.target.value === 'Kirim' ? 'Kirim_Moliya' : "Ta'mirlash" })}>

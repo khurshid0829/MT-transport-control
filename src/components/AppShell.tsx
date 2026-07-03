@@ -87,15 +87,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <header style={{
-          height: 56, borderBottom: '1px solid var(--border)', background: 'var(--surface)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', gap: 12,
+          minHeight: 56, borderBottom: '1px solid var(--border)', background: 'var(--surface)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', gap: 12,
+          flexWrap: 'wrap',
         }}>
           <div className="mobile-only-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Logo size={24} />
             <span style={{ fontWeight: 600, fontSize: 14 }}>M-T Transport</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto', flexWrap: 'wrap' }}>
+            <span className="header-user-label" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               {user.ism_sharif} · <span className="badge badge-neutral">{ROLE_LABELS[user.rol] || user.rol}</span>
             </span>
             <button className="btn" onClick={handleLogout}><LogOut size={15} /> Chiqish</button>

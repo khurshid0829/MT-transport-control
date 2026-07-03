@@ -51,7 +51,7 @@ export default function AuditPage() {
                   {expanded === r.id && (
                     <tr key={r.id + '-detail'}>
                       <td colSpan={4} style={{ background: 'var(--bg)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, padding: 8 }}>
                           <div>
                             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Eski ma'lumot</div>
                             <pre style={{ fontSize: 11, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>

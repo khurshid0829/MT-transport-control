@@ -60,7 +60,7 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h1>Foydalanuvchilar ({users.length})</h1>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Bekor qilish' : '+ Yangi foydalanuvchi'}
