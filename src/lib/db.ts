@@ -10,7 +10,7 @@ declare global {
 function createPool(): Pool {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error('DATABASE_URL topilmadi. .env faylini tekshiring.');
+    throw new Error('DATABASE_URL topilmadi. Vercel loyihangizda Environment Variables bo\'limiga qo\'shing.');
   }
   return new Pool({
     connectionString,
@@ -20,10 +20,25 @@ function createPool(): Pool {
   });
 }
 
-export const pool = global.__mtPgPool ?? createPool();
-if (process.env.NODE_ENV !== 'production') {
-  global.__mtPgPool = pool;
+/**
+ * MUHIM: pool build vaqtida emas, faqat birinchi haqiqiy so'rov kelganda
+ * yaratiladi (lazy). Aks holda Next.js "Collecting page data" bosqichida
+ * (build paytida, hali runtime environment variable'lar to'liq bo'lmasligi
+ * mumkin bo'lgan holatda) modul yuklanishi bilanoq xato beradi va butun
+ * build'ni to'xtatib qo'yadi.
+ */
+function getPool(): Pool {
+  if (!global.__mtPgPool) {
+    global.__mtPgPool = createPool();
+  }
+  return global.__mtPgPool;
 }
+
+/** `pool.query(...)` kabi ishlatish uchun proxy — chaqirilganda pool lazy yaratiladi. */
+export const pool = {
+  query: (...args: Parameters<Pool['query']>) => getPool().query(...args),
+  connect: () => getPool().connect(),
+} as Pick<Pool, 'query' | 'connect'>;
 
 /**
  * Audit trigger'lar (trg_audit_cars, trg_audit_transactions) to'g'ri
