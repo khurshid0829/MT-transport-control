@@ -151,4 +151,4 @@ sql/
 
 Hozircha bu faqat API qatlami (`/` sahifasi bo'sh). Agar xohlasangiz, keyingi
 qadam sifatida login formasi va dashboard (avtoparklar ro'yxati, tranzaksiya
-kiritish formasi, Compare hisobot grafigi) UI'sini quramiz.
+kiritish formasi, Compare hisobot grafigi) UI'sini quramiz. 
