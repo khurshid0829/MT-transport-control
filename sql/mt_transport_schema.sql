@@ -347,3 +347,13 @@ ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_avto_id_fkey;
 ALTER TABLE transactions
     ADD CONSTRAINT transactions_avto_id_fkey
     FOREIGN KEY (avto_id) REFERENCES cars(id) ON DELETE RESTRICT;
+
+-- =====================================================================
+-- 15. XARAJAT TURLARINI KENGAYTIRISH (C-bosqich)
+--     Yangi turlar: Moy, YTX (Yo'l-transport xodisasi/avariya),
+--     Kapital ta'mir, Diagnostika
+-- =====================================================================
+ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Moy';
+ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'YTX';
+ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Kapital ta''mir';
+ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Diagnostika';

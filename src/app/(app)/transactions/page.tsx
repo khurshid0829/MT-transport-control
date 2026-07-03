@@ -20,8 +20,8 @@ interface Tx {
 }
 interface Car { id: number; davlat_raqami: string; tur: string; }
 
-const XARAJAT_TURLARI = ["Ta'mirlash", "Yoqilg'i", 'Ehtiyot qism', 'Boshqa', 'Kirim_Moliya'];
-const MILEAGE_RELATED = ["Ta'mirlash", 'Ehtiyot qism'];
+const XARAJAT_TURLARI = ["Yoqilg'i", 'Moy', "Ta'mirlash", 'Ehtiyot qism', 'YTX', "Kapital ta'mir", 'Diagnostika', 'Boshqa', 'Kirim_Moliya'];
+const MILEAGE_RELATED = ["Ta'mirlash", 'Ehtiyot qism', "Kapital ta'mir", 'YTX', 'Diagnostika', 'Moy'];
 
 export default function TransactionsPage() {
   const user = getUser();
@@ -53,6 +53,16 @@ export default function TransactionsPage() {
   useEffect(() => { loadAll(); }, []);
 
   const needsMileage = MILEAGE_RELATED.includes(form.xarajat_turi);
+  const [filterType, setFilterType] = useState('');
+  const [sortOrder, setSortOrder] = useState<'yangi' | 'summa_kop' | 'summa_kam'>('yangi');
+
+  const displayedTxs = txs
+    .filter((t) => !filterType || t.xarajat_turi === filterType)
+    .sort((a, b) => {
+      if (sortOrder === 'summa_kop') return Number(b.summa) - Number(a.summa);
+      if (sortOrder === 'summa_kam') return Number(a.summa) - Number(b.summa);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -161,11 +171,30 @@ export default function TransactionsPage() {
         </div>
       )}
 
+      <div className="card" style={{ padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Xarajat turi:</label>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 8 }}>
+            <option value="">Barchasi</option>
+            {XARAJAT_TURLARI.filter((x) => x !== 'Kirim_Moliya').map((x) => <option key={x} value={x}>{x}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Saralash:</label>
+          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as any)} style={{ padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 8 }}>
+            <option value="yangi">Sana (yangi birinchi)</option>
+            <option value="summa_kop">Summa: ko'pdan kamga</option>
+            <option value="summa_kam">Summa: kamdan ko'pga</option>
+          </select>
+        </div>
+        <span style={{ fontSize: 12.5, color: 'var(--text-muted)', marginLeft: 'auto' }}>{displayedTxs.length} ta natija</span>
+      </div>
+
       <div className="card" style={{ padding: 0 }}>
         {loading ? (
           <div className="empty-state">Yuklanmoqda...</div>
-        ) : txs.length === 0 ? (
-          <div className="empty-state">Hali tranzaksiya kiritilmagan.</div>
+        ) : displayedTxs.length === 0 ? (
+          <div className="empty-state">Mos tranzaksiya topilmadi.</div>
         ) : (
           <table className="responsive-table">
             <thead>
@@ -175,7 +204,7 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {txs.map((t) => (
+              {displayedTxs.map((t) => (
                 <tr key={t.id} style={t.bekor_qilindi ? { opacity: 0.5 } : undefined}>
                   <td data-label="Sana">{new Date(t.created_at).toLocaleDateString()}</td>
                   <td data-label="Turi">

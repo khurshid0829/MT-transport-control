@@ -1,6 +1,20 @@
 import { z } from 'zod';
 
-const MILEAGE_RELATED_TYPES = ["Ta'mirlash", 'Ehtiyot qism'];
+export const XARAJAT_TURLARI = [
+  "Yoqilg'i",
+  'Moy',
+  "Ta'mirlash",
+  'Ehtiyot qism',
+  'YTX',
+  "Kapital ta'mir",
+  'Diagnostika',
+  'Boshqa',
+  'Kirim_Moliya',
+] as const;
+
+// Avto holatiga to'g'ridan-to'g'ri ta'sir qiluvchi turlar uchun
+// avto_id va amaldagi_yurgan_masofa (odometr) majburiy — 2-qoida shu turlarga tegishli.
+const MILEAGE_RELATED_TYPES = ["Ta'mirlash", 'Ehtiyot qism', "Kapital ta'mir", 'YTX', 'Diagnostika', 'Moy'];
 
 export const createTransactionSchema = z
   .object({
@@ -8,7 +22,7 @@ export const createTransactionSchema = z
     valyuta: z.enum(['UZS', 'USD']),
     summa: z.number().positive(),
     avto_id: z.number().int().positive().optional(),
-    xarajat_turi: z.enum(["Ta'mirlash", "Yoqilg'i", 'Ehtiyot qism', 'Boshqa', 'Kirim_Moliya']),
+    xarajat_turi: z.enum(XARAJAT_TURLARI),
     amaldagi_yurgan_masofa: z.number().int().min(0).optional(),
     tavsif: z.string().max(2000).optional(),
   })
