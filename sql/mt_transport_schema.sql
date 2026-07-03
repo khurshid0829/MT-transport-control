@@ -302,3 +302,12 @@ CREATE TRIGGER trg_audit_exchange_rates
     AFTER INSERT ON exchange_rates
     FOR EACH ROW
     EXECUTE FUNCTION log_audit_trail();
+
+-- =====================================================================
+-- 13. AUDIT TRIGGER — users jadvali uchun ham (bloklash/faollashtirish
+--     kabi o'zgarishlar ham audit tarixida ko'rinishi uchun)
+-- =====================================================================
+CREATE TRIGGER trg_audit_users
+    AFTER UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION log_audit_trail();
