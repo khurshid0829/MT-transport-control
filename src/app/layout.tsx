@@ -1,3 +1,5 @@
+import './globals.css';
+
 export const metadata = {
   title: 'M-T Transport',
   description: 'M-T Transport boshqaruv tizimi',
