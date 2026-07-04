@@ -89,8 +89,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header style={{
-          minHeight: 56, borderBottom: '1px solid var(--border)', background: 'var(--surface)',
+        <header className="app-header" style={{
+          minHeight: 56, borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', gap: 12,
           flexWrap: 'wrap',
         }}>
