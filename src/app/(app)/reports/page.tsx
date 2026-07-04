@@ -5,6 +5,8 @@ import { apiFetch } from '@/lib/api-client';
 import { canSetExchangeRate, getUser } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
+import { exportToExcel } from '@/lib/export';
+import { Download } from 'lucide-react';
 
 interface CurrencyStat { kirim: number; chiqim: number; sof_balans: number; amallar_soni: number; }
 interface CompareData {
@@ -16,6 +18,10 @@ interface CompareData {
 interface Rate { id: number; kurs: string; amal_qilish_sanasi: string; }
 interface ExpenseRow { xarajat_turi: string; valyuta: string; jami_summa: string; }
 interface Car { id: number; davlat_raqami: string; tur: string; }
+interface RentabellikRow {
+  avto_id: number; davlat_raqami: string; tur: string; valyuta: string;
+  kirim: number; chiqim: number; sof_foyda: number; yurgan_masofa: number; xarajat_100km: number | null;
+}
 
 function toDateInputValue(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -47,6 +53,8 @@ export default function ReportsPage() {
 
   const [data, setData] = useState<CompareData | null>(null);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [rentabellik, setRentabellik] = useState<RentabellikRow[]>([]);
+  const [rentabellikSort, setRentabellikSort] = useState<'foyda' | 'xarajat_km'>('foyda');
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,14 +80,16 @@ export default function ReportsPage() {
     if (avtoId) params.set('avto_id', avtoId);
     const qs = params.toString() ? '?' + params.toString() : '';
 
-    const [compareRes, expensesRes] = await Promise.all([
+    const [compareRes, expensesRes, rentRes] = await Promise.all([
       apiFetch<CompareData>('/api/reports/compare' + qs),
       apiFetch<ExpenseRow[]>('/api/reports/expenses-by-type' + qs),
+      apiFetch<RentabellikRow[]>('/api/reports/avto-rentabelligi' + qs),
     ]);
     if (compareRes.success && compareRes.data) setData(compareRes.data);
     if (expensesRes.success && expensesRes.data) {
       setExpenses([...expensesRes.data].sort((a, b) => Number(b.jami_summa) - Number(a.jami_summa)));
     }
+    if (rentRes.success && rentRes.data) setRentabellik(rentRes.data);
     setLoading(false);
   }
 
@@ -214,7 +224,12 @@ export default function ReportsPage() {
 
           {expenses.length > 0 && (
             <div className="card" style={{ marginBottom: 20 }}>
-              <h2 style={{ marginBottom: 4 }}>Xarajatlar taqsimoti (ko'pdan kamga)</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+                <h2>Xarajatlar taqsimoti (ko'pdan kamga)</h2>
+                <button className="btn" style={{ padding: '5px 10px', fontSize: 12.5 }} onClick={() => exportToExcel(expenses, 'xarajatlar_taqsimoti')}>
+                  <Download size={14} /> Excel
+                </button>
+              </div>
               <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
                 Qaysi xarajat turi budjetning eng katta qismini tashkil qilishini ko'rsatadi.
               </p>
@@ -234,6 +249,52 @@ export default function ReportsPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {rentabellik.length > 0 && (
+            <div className="card" style={{ marginBottom: 20, padding: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 0', flexWrap: 'wrap', gap: 8 }}>
+                <h2>Avto rentabelligi va samaradorlik</h2>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select
+                    value={rentabellikSort}
+                    onChange={(e) => setRentabellikSort(e.target.value as any)}
+                    style={{ padding: '5px 10px', fontSize: 12.5, border: '1px solid var(--border-strong)', borderRadius: 8 }}
+                  >
+                    <option value="foyda">Sof foyda bo'yicha</option>
+                    <option value="xarajat_km">100km xarajat bo'yicha</option>
+                  </select>
+                  <button className="btn" style={{ padding: '5px 10px', fontSize: 12.5 }} onClick={() => exportToExcel(rentabellik, 'avto_rentabelligi')}>
+                    <Download size={14} /> Excel
+                  </button>
+                </div>
+              </div>
+              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '8px 20px 0' }}>
+                Sof foyda = Kirim − Chiqim (valyuta bo'yicha alohida). 100 km xarajat — shu avto
+                bosgan har 100 km uchun o'rtacha necha pul sarflangani.
+              </p>
+              <table className="responsive-table" style={{ marginTop: 12 }}>
+                <thead>
+                  <tr><th>Avto</th><th>Valyuta</th><th>Kirim</th><th>Chiqim</th><th>Sof foyda</th><th>100km xarajat</th></tr>
+                </thead>
+                <tbody>
+                  {[...rentabellik]
+                    .sort((a, b) => rentabellikSort === 'foyda' ? b.sof_foyda - a.sof_foyda : (b.xarajat_100km ?? 0) - (a.xarajat_100km ?? 0))
+                    .map((r, i) => (
+                      <tr key={i}>
+                        <td data-label="Avto">{r.tur} — {r.davlat_raqami}</td>
+                        <td data-label="Valyuta">{r.valyuta}</td>
+                        <td data-label="Kirim" style={{ color: 'var(--success)' }}>{formatNumber(r.kirim)}</td>
+                        <td data-label="Chiqim" style={{ color: 'var(--danger)' }}>{formatNumber(r.chiqim)}</td>
+                        <td data-label="Sof foyda" style={{ fontWeight: 600, color: r.sof_foyda >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                          {formatNumber(r.sof_foyda)}
+                        </td>
+                        <td data-label="100km xarajat">{r.xarajat_100km !== null ? formatNumber(r.xarajat_100km) : '—'}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </div>
           )}
 

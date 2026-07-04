@@ -8,6 +8,11 @@ import NumberInput from '@/components/NumberInput';
 import PlateNumberInput from '@/components/PlateNumberInput';
 import CollapsibleCard from '@/components/CollapsibleCard';
 
+interface CarDocument {
+  id: number; avto_id: number; hujjat_turi: string; amal_qilish_muddati: string;
+  izoh: string | null; davlat_raqami: string; tur: string; qolgan_kun: number;
+}
+
 interface Car {
   id: number;
   tur: string;
@@ -18,11 +23,14 @@ interface Car {
   texnik_holat: string;
 }
 
-const STATUSES = ['Aktiv', "Ta'mirlashda", 'Nosoz'];
+const STATUSES = ['Aktiv', "Ta'mirlashda", 'Zaxirada', 'Nosoz'];
+const STATUS_LABELS: Record<string, string> = {
+  Aktiv: 'Liniyada', "Ta'mirlashda": "Ta'mirlashda", Zaxirada: 'Zaxirada', Nosoz: 'Nosoz',
+};
 
 function StatusBadge({ status }: { status: string }) {
   const cls = status === 'Aktiv' ? 'badge-success' : status === 'Nosoz' ? 'badge-danger' : 'badge-warning';
-  return <span className={'badge ' + cls}>{status}</span>;
+  return <span className={'badge ' + cls}>{STATUS_LABELS[status] || status}</span>;
 }
 
 export default function CarsPage() {
@@ -35,6 +43,12 @@ export default function CarsPage() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const [documents, setDocuments] = useState<CarDocument[]>([]);
+  const [showDocForm, setShowDocForm] = useState(false);
+  const [docForm, setDocForm] = useState({ avto_id: '', hujjat_turi: 'OSAGO', amal_qilish_muddati: '', izoh: '' });
+  const [docError, setDocError] = useState<string | null>(null);
+  const [docSaving, setDocSaving] = useState(false);
 
   const [showNewType, setShowNewType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
@@ -50,16 +64,39 @@ export default function CarsPage() {
 
   async function loadCars() {
     setLoading(true);
-    const [carsRes, typesRes] = await Promise.all([
+    const [carsRes, typesRes, docsRes] = await Promise.all([
       apiFetch<Car[]>('/api/cars'),
       apiFetch<string[]>('/api/car-types'),
+      apiFetch<CarDocument[]>('/api/car-documents'),
     ]);
-    if (carsRes.success && carsRes.data) setCars(carsRes.data);
+    if (carsRes.success && carsRes.data) {
+      setCars(carsRes.data);
+      setDocForm((f) => (f.avto_id ? f : { ...f, avto_id: String(carsRes.data![0]?.id ?? '') }));
+    }
     if (typesRes.success && typesRes.data) {
       setCarTypes(typesRes.data);
       setForm((f) => (f.tur ? f : { ...f, tur: typesRes.data![0] || '' }));
     }
+    if (docsRes.success && docsRes.data) setDocuments(docsRes.data);
     setLoading(false);
+  }
+
+  async function handleCreateDoc(e: React.FormEvent) {
+    e.preventDefault();
+    setDocError(null);
+    setDocSaving(true);
+    const res = await apiFetch<CarDocument>('/api/car-documents', {
+      method: 'POST',
+      body: JSON.stringify({ ...docForm, avto_id: Number(docForm.avto_id) }),
+    });
+    setDocSaving(false);
+    if (res.success) {
+      setShowDocForm(false);
+      setDocForm({ ...docForm, amal_qilish_muddati: '', izoh: '' });
+      loadCars();
+    } else {
+      setDocError(res.error?.message || 'Xatolik yuz berdi');
+    }
   }
 
   useEffect(() => {
@@ -177,6 +214,72 @@ export default function CarsPage() {
         </CollapsibleCard>
       )}
 
+      {canWrite && (
+        <CollapsibleCard open={showDocForm} onToggle={() => setShowDocForm((v) => !v)} title="Avto hujjati qo'shish (Sug'urta, Texnik ko'rik va h.k.)">
+          {docError && <div className="alert alert-error">{docError}</div>}
+          <form onSubmit={handleCreateDoc}>
+            <div className="form-grid">
+              <div className="field">
+                <label>Avto</label>
+                <select value={docForm.avto_id} onChange={(e) => setDocForm({ ...docForm, avto_id: e.target.value })} required>
+                  {cars.map((c) => <option key={c.id} value={c.id}>{c.tur} — {c.davlat_raqami}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Hujjat turi</label>
+                <select value={docForm.hujjat_turi} onChange={(e) => setDocForm({ ...docForm, hujjat_turi: e.target.value })}>
+                  <option value="OSAGO">Sug'urta (OSAGO)</option>
+                  <option value="Texnik korik">Texnik ko'rik</option>
+                  <option value="Gaz ballon sinovi">Gaz ballon sinovi</option>
+                  <option value="Ishonchnoma">Ishonchnoma</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Amal qilish muddati</label>
+                <input type="date" value={docForm.amal_qilish_muddati} onChange={(e) => setDocForm({ ...docForm, amal_qilish_muddati: e.target.value })} required />
+              </div>
+              <div className="field" style={{ gridColumn: '1 / -1' }}>
+                <label>Izoh (ixtiyoriy)</label>
+                <input value={docForm.izoh} onChange={(e) => setDocForm({ ...docForm, izoh: e.target.value })} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" className="btn btn-primary" disabled={docSaving}>
+                {docSaving ? 'Saqlanmoqda...' : 'Saqlash'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowDocForm(false)}>Bekor qilish</button>
+            </div>
+          </form>
+        </CollapsibleCard>
+      )}
+
+      {documents.length > 0 && (
+        <div className="card" style={{ padding: 0, marginBottom: 20 }}>
+          <div style={{ padding: '14px 20px 0' }}><h2>Hujjatlar muddati</h2></div>
+          <table className="responsive-table">
+            <thead><tr><th>Avto</th><th>Hujjat</th><th>Muddati</th><th>Holati</th></tr></thead>
+            <tbody>
+              {documents.map((d) => (
+                <tr key={d.id}>
+                  <td data-label="Avto">{d.tur} — {d.davlat_raqami}</td>
+                  <td data-label="Hujjat">{d.hujjat_turi}</td>
+                  <td data-label="Muddati">{new Date(d.amal_qilish_muddati).toLocaleDateString('uz-UZ')}</td>
+                  <td data-label="Holati">
+                    {d.qolgan_kun < 0 ? (
+                      <span className="badge badge-danger">Muddati o'tgan</span>
+                    ) : d.qolgan_kun <= 10 ? (
+                      <span className="badge badge-warning">{d.qolgan_kun} kun qoldi</span>
+                    ) : (
+                      <span className="badge badge-success">Amal qiladi</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="card" style={{ padding: 0 }}>
         {loading ? (
           <div className="empty-state">Yuklanmoqda...</div>
@@ -201,7 +304,7 @@ export default function CarsPage() {
                   <td data-label="Holati">
                     {canWrite ? (
                       <select value={c.texnik_holat} onChange={(e) => handleStatusChange(c.id, e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 6 }}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                        {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
                       </select>
                     ) : (
                       <StatusBadge status={c.texnik_holat} />

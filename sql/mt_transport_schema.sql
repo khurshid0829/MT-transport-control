@@ -495,3 +495,28 @@ CREATE TRIGGER trg_audit_users
     AFTER INSERT OR UPDATE ON users
     FOR EACH ROW
     EXECUTE FUNCTION log_audit_trail_users();
+
+-- =====================================================================
+-- 20. AVTO HUJJATLARI (car_documents) — Sug'urta, Texnik ko'rik,
+--     Gaz ballon sinovi, Ishonchnoma muddatlari
+-- =====================================================================
+CREATE TABLE car_documents (
+    id                    SERIAL PRIMARY KEY,
+    avto_id               INT NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+    hujjat_turi           VARCHAR(30) NOT NULL CHECK (hujjat_turi IN ('OSAGO', 'Texnik korik', 'Gaz ballon sinovi', 'Ishonchnoma')),
+    amal_qilish_muddati   DATE NOT NULL,
+    izoh                  TEXT,
+    kim_kiritdi           INT REFERENCES users(id),
+    created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_car_documents_avto ON car_documents (avto_id);
+CREATE INDEX idx_car_documents_muddat ON car_documents (amal_qilish_muddati);
+
+CREATE TRIGGER trg_audit_car_documents
+    AFTER INSERT OR UPDATE OR DELETE ON car_documents
+    FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- Avto operatsion holatiga "Zaxirada" (rezerv) qo'shildi.
+-- ("Aktiv" qiymati o'zgarmaydi, lekin interfeysda "Liniyada" deb ko'rsatiladi)
+ALTER TYPE car_status ADD VALUE IF NOT EXISTS 'Zaxirada';

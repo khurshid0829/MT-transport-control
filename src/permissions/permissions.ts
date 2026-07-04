@@ -1,7 +1,7 @@
 import { UserRole } from '../lib/auth';
 import { AppError } from '../lib/AppError';
 
-export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates' | 'ombor_mahsulotlari' | 'ombor_harakatlari';
+export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates' | 'ombor_mahsulotlari' | 'ombor_harakatlari' | 'car_documents';
 export type Action = 'create' | 'read' | 'update' | 'delete';
 
 /**
@@ -57,6 +57,11 @@ const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
   // faqat CHIEF_MECHANIC moddiy qiymatlarni kirita oladi.
   ombor_harakatlari: {
     create: ['CHIEF_MECHANIC'],
+    read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
+  },
+  // Avto hujjatlari (sug'urta, texnik ko'rik va h.k.) — cars bilan bir xil mantiq
+  car_documents: {
+    create: ['FOUNDER', 'MANAGER'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
 };

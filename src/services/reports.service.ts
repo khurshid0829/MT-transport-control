@@ -65,4 +65,48 @@ export const reportsService = {
     );
     return result.rows;
   },
+
+  /**
+   * Avto rentabelligi va samaradorlik (cost per km) hisoboti.
+   * MUHIM (4-qoida): agar bitta avtoda UZS HAM, USD HAM tranzaksiya bo'lsa,
+   * ikkitasi ALOHIDA qatorda chiqadi — hech qachon qo'shilmaydi.
+   */
+  async avtoRentabelligi(filters: Record<string, any>) {
+    const conditions: string[] = ['(t.bekor_qilindi = false OR t.bekor_qilindi IS NULL)'];
+    const values: unknown[] = [];
+    if (filters.dan) { values.push(filters.dan); conditions.push(`t.created_at >= $${values.length}`); }
+    if (filters.gacha) { values.push(filters.gacha); conditions.push(`t.created_at <= $${values.length}`); }
+
+    const result = await pool.query(
+      `SELECT c.id AS avto_id, c.davlat_raqami, c.tur,
+              c.boshlangich_yurgan_masofasi, c.joriy_yurgan_masofasi,
+              t.valyuta,
+              COALESCE(SUM(CASE WHEN t.turi = 'Kirim' THEN t.summa ELSE 0 END), 0) AS kirim,
+              COALESCE(SUM(CASE WHEN t.turi = 'Chiqim' THEN t.summa ELSE 0 END), 0) AS chiqim
+       FROM cars c
+       LEFT JOIN transactions t ON t.avto_id = c.id AND ${conditions.join(' AND ')}
+       GROUP BY c.id, c.davlat_raqami, c.tur, c.boshlangich_yurgan_masofasi, c.joriy_yurgan_masofasi, t.valyuta
+       HAVING t.valyuta IS NOT NULL
+       ORDER BY c.davlat_raqami`,
+      values
+    );
+
+    return result.rows.map((r) => {
+      const masofa = Number(r.joriy_yurgan_masofasi) - Number(r.boshlangich_yurgan_masofasi);
+      const chiqim = Number(r.chiqim);
+      const kirim = Number(r.kirim);
+      return {
+        avto_id: r.avto_id,
+        davlat_raqami: r.davlat_raqami,
+        tur: r.tur,
+        valyuta: r.valyuta,
+        kirim,
+        chiqim,
+        sof_foyda: kirim - chiqim,
+        yurgan_masofa: masofa,
+        // 100 km uchun o'rtacha xarajat — masofa 0 bo'lsa hisoblanmaydi (bo'lishga urinmaydi)
+        xarajat_100km: masofa > 0 ? Math.round((chiqim / masofa) * 100) : null,
+      };
+    });
+  },
 };

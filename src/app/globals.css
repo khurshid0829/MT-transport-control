@@ -226,3 +226,30 @@ tr:hover td { background: var(--bg); }
 @media (max-width: 420px) {
   .header-user-label { display: none; }
 }
+
+/* ===================== MOBIL BOTTOM SHEET (forma drawer) ===================== */
+.bottom-sheet-backdrop { display: none; }
+@media (max-width: 860px) {
+  .bottom-sheet-backdrop.open {
+    display: block; position: fixed; inset: 0; background: rgba(20,24,31,0.45); z-index: 70;
+  }
+  .bottom-sheet-card {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 71;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 85vh; overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    margin-bottom: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-sheet-card.open { transform: translateY(0); }
+  /* Sheet ochilganda ichki grid-rows animatsiyasi kerak emas — har doim to'liq ko'rinadi */
+  .bottom-sheet-card .collapsible { grid-template-rows: 1fr !important; }
+  .bottom-sheet-handle {
+    display: block; width: 36px; height: 4px; background: var(--border-strong);
+    border-radius: 2px; margin: 10px auto 0;
+  }
+}
+@media (min-width: 861px) {
+  .bottom-sheet-handle { display: none; }
+}

@@ -15,8 +15,16 @@ function createPool(): Pool {
   return new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false }, // Supabase uchun majburiy
-    max: 5, // Supabase pooler bilan ishlaganda kam sonli connection yetarli
+    // MUHIM (Gemini tahlili asosida aniqlangan): serverless muhitda (Vercel)
+    // har bir "issiq" (warm) funksiya nusxasi o'zining alohida pool'iga ega
+    // bo'ladi. Agar bitta nusxada max=5 bo'lsa va bir vaqtning o'zida 50 ta
+    // funksiya nusxasi ishlasa — bu 250 tagacha ulanish degani, Supabase
+    // pooler (PgBouncer) limitiga tez yetkazadi. Shuning uchun har bir
+    // nusxa uchun KICHIK pool (max=3) yetarli — haqiqiy pooling ishi
+    // Supabase'ning Transaction Pooler'i (port 6543) tomonidan bajariladi.
+    max: 3,
     idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000, // ulanish 5 soniyada bo'lmasa, osilib qolmasdan xato qaytaradi
   });
 }
 
