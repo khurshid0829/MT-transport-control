@@ -357,3 +357,24 @@ ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Moy';
 ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'YTX';
 ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Kapital ta''mir';
 ALTER TYPE expense_type ADD VALUE IF NOT EXISTS 'Diagnostika';
+
+-- =====================================================================
+-- 16. AVTO TURLARI — endi kengaytiriladigan jadval (ENUM emas)
+--     Foydalanuvchi (FOUNDER/MANAGER) interfeys orqali istalgan vaqtda
+--     yangi turi qo'sha oladi, kod o'zgartirishga hojat qolmaydi.
+-- =====================================================================
+CREATE TABLE car_types (
+    nomi        VARCHAR(50) PRIMARY KEY,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Mavjud 4 ta turi bilan boshlang'ich to'ldirish
+INSERT INTO car_types (nomi) VALUES ('Isuzu 10t'), ('Isuzu 5t'), ('Changan'), ('Labo')
+ON CONFLICT (nomi) DO NOTHING;
+
+-- cars.tur ustunini ENUM'dan VARCHAR'ga o'tkazish va car_types'ga bog'lash
+ALTER TABLE cars ALTER COLUMN tur TYPE VARCHAR(50);
+ALTER TABLE cars ADD CONSTRAINT cars_tur_fkey FOREIGN KEY (tur) REFERENCES car_types(nomi);
+
+-- Endi ishlatilmaydigan ENUM turini tozalash
+DROP TYPE IF EXISTS car_type;

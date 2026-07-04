@@ -4,7 +4,7 @@ const currentYear = 2026;
 
 export const createCarSchema = z
   .object({
-    tur: z.enum(['Isuzu 10t', 'Isuzu 5t', 'Changan', 'Labo']),
+    tur: z.string().min(1, "Avto turi tanlanishi shart"),
     davlat_raqami: z
       .string()
       .regex(
@@ -21,7 +21,7 @@ export const createCarSchema = z
   });
 
 export const updateCarSchema = z.object({
-  tur: z.enum(['Isuzu 10t', 'Isuzu 5t', 'Changan', 'Labo']).optional(),
+  tur: z.string().min(1).optional(),
   davlat_raqami: z.string().min(4).max(20).optional(),
   texnik_holat: z.enum(['Aktiv', "Ta'mirlashda", 'Nosoz']).optional(),
 });

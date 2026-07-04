@@ -18,7 +18,6 @@ interface Car {
   texnik_holat: string;
 }
 
-const CAR_TYPES = ['Isuzu 10t', 'Isuzu 5t', 'Changan', 'Labo'];
 const STATUSES = ['Aktiv', "Ta'mirlashda", 'Nosoz'];
 
 function StatusBadge({ status }: { status: string }) {
@@ -31,13 +30,18 @@ export default function CarsPage() {
   const canWrite = canWriteCars(user?.rol);
 
   const [cars, setCars] = useState<Car[]>([]);
+  const [carTypes, setCarTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [showNewType, setShowNewType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newTypeError, setNewTypeError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
-    tur: CAR_TYPES[0],
+    tur: '',
     davlat_raqami: '',
     ishlab_chiqarilgan_yili: new Date().getFullYear(),
     boshlangich_yurgan_masofasi: 0,
@@ -46,14 +50,40 @@ export default function CarsPage() {
 
   async function loadCars() {
     setLoading(true);
-    const res = await apiFetch<Car[]>('/api/cars');
-    if (res.success && res.data) setCars(res.data);
+    const [carsRes, typesRes] = await Promise.all([
+      apiFetch<Car[]>('/api/cars'),
+      apiFetch<string[]>('/api/car-types'),
+    ]);
+    if (carsRes.success && carsRes.data) setCars(carsRes.data);
+    if (typesRes.success && typesRes.data) {
+      setCarTypes(typesRes.data);
+      setForm((f) => (f.tur ? f : { ...f, tur: typesRes.data![0] || '' }));
+    }
     setLoading(false);
   }
 
   useEffect(() => {
     loadCars();
   }, []);
+
+  async function handleAddType(e: React.FormEvent) {
+    e.preventDefault();
+    setNewTypeError(null);
+    if (!newTypeName.trim()) return;
+    const res = await apiFetch<{ nomi: string }>('/api/car-types', {
+      method: 'POST',
+      body: JSON.stringify({ nomi: newTypeName.trim() }),
+    });
+    if (res.success && res.data) {
+      const updated = [...carTypes, res.data.nomi].sort();
+      setCarTypes(updated);
+      setForm((f) => ({ ...f, tur: res.data!.nomi }));
+      setNewTypeName('');
+      setShowNewType(false);
+    } else {
+      setNewTypeError(res.error?.message || 'Xatolik yuz berdi');
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +97,7 @@ export default function CarsPage() {
     setSaving(false);
     if (res.success) {
       setShowForm(false);
-      setForm({ tur: CAR_TYPES[0], davlat_raqami: '', ishlab_chiqarilgan_yili: new Date().getFullYear(), boshlangich_yurgan_masofasi: 0, joriy_yurgan_masofasi: 0 });
+      setForm({ tur: carTypes[0] || '', davlat_raqami: '', ishlab_chiqarilgan_yili: new Date().getFullYear(), boshlangich_yurgan_masofasi: 0, joriy_yurgan_masofasi: 0 });
       loadCars();
     } else {
       setError(res.error?.message || 'Xatolik yuz berdi');
@@ -97,9 +127,26 @@ export default function CarsPage() {
             <div className="form-grid">
               <div className="field">
                 <label>Turi</label>
-                <select value={form.tur} onChange={(e) => setForm({ ...form, tur: e.target.value })}>
-                  {CAR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select value={form.tur} onChange={(e) => setForm({ ...form, tur: e.target.value })} style={{ flex: 1 }}>
+                    {carTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <button type="button" className="btn" onClick={() => setShowNewType((v) => !v)} title="Yangi turi qo'shish">
+                    + Turi
+                  </button>
+                </div>
+                {showNewType && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <input
+                      value={newTypeName}
+                      onChange={(e) => setNewTypeName(e.target.value)}
+                      placeholder="masalan: KamAZ 65115"
+                      style={{ flex: 1 }}
+                    />
+                    <button type="button" className="btn btn-primary" onClick={handleAddType}>Qo'shish</button>
+                  </div>
+                )}
+                {newTypeError && <p style={{ color: 'var(--danger)', fontSize: 12.5, marginTop: 4 }}>{newTypeError}</p>}
               </div>
               <div className="field">
                 <label>Davlat raqami</label>
