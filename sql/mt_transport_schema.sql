@@ -450,3 +450,11 @@ CREATE TRIGGER trg_audit_ombor_mahsulotlari
 CREATE TRIGGER trg_audit_ombor_harakatlari
     AFTER INSERT OR UPDATE OR DELETE ON ombor_harakatlari
     FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- =====================================================================
+-- 18. AUTH XAVFSIZLIGI — brute-force himoyasi
+--     5 marta noto'g'ri parol kiritilsa, 15 daqiqaga bloklanadi.
+-- =====================================================================
+ALTER TABLE users
+    ADD COLUMN muvaffaqiyatsiz_urinishlar INT NOT NULL DEFAULT 0,
+    ADD COLUMN bloklangan_gacha TIMESTAMP;

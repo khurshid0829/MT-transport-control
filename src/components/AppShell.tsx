@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Truck, Users as UsersIcon, Receipt, BarChart3,
-  History, UserCog, LogOut, MoreHorizontal, X, Package, Sparkles,
+  History, UserCog, LogOut, MoreHorizontal, X, Package, Sparkles, KeyRound,
 } from 'lucide-react';
 import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
 import Logo from './Logo';
@@ -67,6 +67,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/reports', label: 'Hisobotlar', icon: BarChart3, show: canViewReports(user.rol) },
     { href: '/audit', label: 'Audit log', icon: History, show: canViewAudit(user.rol) },
     { href: '/users', label: 'Foydalanuvchilar', icon: UserCog, show: canManageUsers(user.rol) },
+    { href: '/profil', label: 'Profil', icon: KeyRound, show: true },
   ].filter((i) => i.show);
 
   const primaryMobile = allItems.slice(0, 4);

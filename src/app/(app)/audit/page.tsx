@@ -13,6 +13,13 @@ interface AuditRow {
   rol: string | null;
 }
 
+function harakatBadgeClass(harakat: string): string {
+  if (harakat === 'LOGIN_FAILED') return 'badge-danger';
+  if (harakat === 'LOGIN_SUCCESS') return 'badge-success';
+  if (harakat.startsWith('DELETE')) return 'badge-warning';
+  return 'badge-neutral';
+}
+
 export default function AuditPage() {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +52,7 @@ export default function AuditPage() {
                   <tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
                     <td data-label="Vaqt">{new Date(r.vaqt).toLocaleString()}</td>
                     <td data-label="Kim">{r.foydalanuvchi || '—'} {r.rol && <span className="badge badge-neutral">{r.rol}</span>}</td>
-                    <td data-label="Harakat"><b style={{ color: 'var(--accent)' }}>{r.harakat}</b></td>
+                    <td data-label="Harakat"><span className={'badge ' + harakatBadgeClass(r.harakat)}>{r.harakat}</span></td>
                     <td data-label="">{expanded === r.id ? '▲' : '▼'}</td>
                   </tr>
                   {expanded === r.id && (
