@@ -17,7 +17,8 @@
     "jsonwebtoken": "^9.0.2",
     "zod": "^3.23.8",
     "@fontsource/inter": "^5.1.0",
-    "lucide-react": "^0.462.0"
+    "lucide-react": "^0.462.0",
+    "@anthropic-ai/sdk": "^0.32.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",

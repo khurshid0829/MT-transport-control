@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Truck, Users as UsersIcon, Receipt, BarChart3,
-  History, UserCog, LogOut, MoreHorizontal, X, Package,
+  History, UserCog, LogOut, MoreHorizontal, X, Package, Sparkles,
 } from 'lucide-react';
 import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
 import Logo from './Logo';
@@ -59,6 +59,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const allItems = [
     { href: '/dashboard', label: 'Bosh sahifa', icon: LayoutDashboard, show: true },
+    { href: '/ai', label: 'AI Yordamchi', icon: Sparkles, show: true },
     { href: '/cars', label: 'Avtolar', icon: Truck, show: true },
     { href: '/drivers', label: 'Haydovchilar', icon: UsersIcon, show: true },
     { href: '/transactions', label: 'Tranzaksiya', icon: Receipt, show: true },
