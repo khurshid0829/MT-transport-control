@@ -30,8 +30,8 @@ export function apiHandler(handler: Handler): Handler {
         return fail(400, 'CHECK_VIOLATION', "Ma'lumot bazaviy qoidalarga mos kelmadi", pgError.message);
       }
       if (pgError?.code === 'P0001') {
-        // trigger RAISE EXCEPTION — masalan masofa yaxlitligi qoidasi buzilganda
-        return fail(409, 'MILEAGE_INTEGRITY_VIOLATION', pgError.message || 'Masofa yaxlitligi qoidasi buzildi');
+        // trigger RAISE EXCEPTION — masofa yaxlitligi yoki ombor qoldig'i qoidasi buzilganda
+        return fail(409, 'INTEGRITY_VIOLATION', pgError.message || "Ma'lumotlar yaxlitligi qoidasi buzildi");
       }
 
       // eslint-disable-next-line no-console

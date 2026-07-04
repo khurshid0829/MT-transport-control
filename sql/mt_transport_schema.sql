@@ -378,3 +378,75 @@ ALTER TABLE cars ADD CONSTRAINT cars_tur_fkey FOREIGN KEY (tur) REFERENCES car_t
 
 -- Endi ishlatilmaydigan ENUM turini tozalash
 DROP TYPE IF EXISTS car_type;
+
+-- =====================================================================
+-- 17. OMBOR TIZIMI (F-bosqich) — Yoqilg'i/Moy va Ehtiyot qismlar
+--     miqdor/qoldiq kuzatuvi bilan.
+-- =====================================================================
+
+CREATE TABLE ombor_mahsulotlari (
+    id              SERIAL PRIMARY KEY,
+    nomi            VARCHAR(100) NOT NULL UNIQUE,
+    toifa           VARCHAR(30) NOT NULL,              -- masalan: 'Ehtiyot qism', 'Yoqilg'i', 'Moy'
+    olchov_birligi  VARCHAR(20) NOT NULL,               -- dona, litr, kg
+    joriy_qoldiq    NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (joriy_qoldiq >= 0),
+    minimal_qoldiq  NUMERIC(12,2) NOT NULL DEFAULT 0,   -- shundan kam qolsa ogohlantirish
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ombor_harakatlari (
+    id              SERIAL PRIMARY KEY,
+    mahsulot_id     INT NOT NULL REFERENCES ombor_mahsulotlari(id) ON DELETE RESTRICT,
+    harakat_turi    VARCHAR(10) NOT NULL CHECK (harakat_turi IN ('Kirim', 'Chiqim')),
+    miqdor          NUMERIC(12,2) NOT NULL CHECK (miqdor > 0),
+    narx            NUMERIC(15,2),
+    valyuta         VARCHAR(3) CHECK (valyuta IN ('UZS', 'USD')),
+    avto_id         INT REFERENCES cars(id) ON DELETE SET NULL,  -- Chiqim qaysi avtoga ishlatilgani (ixtiyoriy)
+    tavsif          TEXT,
+    kim_kiritdi     INT REFERENCES users(id),
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_ombor_harakatlari_mahsulot ON ombor_harakatlari (mahsulot_id);
+CREATE INDEX idx_ombor_harakatlari_created ON ombor_harakatlari (created_at DESC);
+CREATE INDEX idx_ombor_harakatlari_avto ON ombor_harakatlari (avto_id);
+
+-- Yaxlitlik qoidasi (2-qoidaga o'xshash): Chiqim qoldiqdan ortiq bo'lsa
+-- bloklanadi; Kirim/Chiqim qabul qilinganda qoldiq avtomatik yangilanadi.
+CREATE OR REPLACE FUNCTION apply_ombor_harakat() RETURNS TRIGGER AS $$
+DECLARE
+  joriy NUMERIC;
+BEGIN
+  SELECT joriy_qoldiq INTO joriy FROM ombor_mahsulotlari WHERE id = NEW.mahsulot_id FOR UPDATE;
+
+  IF joriy IS NULL THEN
+    RAISE EXCEPTION 'mahsulot_id = % topilmadi', NEW.mahsulot_id;
+  END IF;
+
+  IF NEW.harakat_turi = 'Chiqim' AND joriy < NEW.miqdor THEN
+    RAISE EXCEPTION 'Omborda yetarli mahsulot yo''q: joriy qoldiq %, so''ralgan %', joriy, NEW.miqdor;
+  END IF;
+
+  IF NEW.harakat_turi = 'Kirim' THEN
+    UPDATE ombor_mahsulotlari SET joriy_qoldiq = joriy_qoldiq + NEW.miqdor WHERE id = NEW.mahsulot_id;
+  ELSE
+    UPDATE ombor_mahsulotlari SET joriy_qoldiq = joriy_qoldiq - NEW.miqdor WHERE id = NEW.mahsulot_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_ombor_harakat
+    BEFORE INSERT ON ombor_harakatlari
+    FOR EACH ROW
+    EXECUTE FUNCTION apply_ombor_harakat();
+
+-- Audit (3-qoida): ombor jadvallaridagi barcha o'zgarishlar ham yoziladi
+CREATE TRIGGER trg_audit_ombor_mahsulotlari
+    AFTER INSERT OR UPDATE OR DELETE ON ombor_mahsulotlari
+    FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+CREATE TRIGGER trg_audit_ombor_harakatlari
+    AFTER INSERT OR UPDATE OR DELETE ON ombor_harakatlari
+    FOR EACH ROW EXECUTE FUNCTION log_audit_trail();

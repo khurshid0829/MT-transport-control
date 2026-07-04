@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Truck, Users as UsersIcon, Receipt, BarChart3,
-  History, UserCog, LogOut, MoreHorizontal, X,
+  History, UserCog, LogOut, MoreHorizontal, X, Package,
 } from 'lucide-react';
 import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
 import Logo from './Logo';
@@ -62,6 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/cars', label: 'Avtolar', icon: Truck, show: true },
     { href: '/drivers', label: 'Haydovchilar', icon: UsersIcon, show: true },
     { href: '/transactions', label: 'Tranzaksiya', icon: Receipt, show: true },
+    { href: '/ombor', label: 'Ombor', icon: Package, show: true },
     { href: '/reports', label: 'Hisobotlar', icon: BarChart3, show: canViewReports(user.rol) },
     { href: '/audit', label: 'Audit log', icon: History, show: canViewAudit(user.rol) },
     { href: '/users', label: 'Foydalanuvchilar', icon: UserCog, show: canManageUsers(user.rol) },

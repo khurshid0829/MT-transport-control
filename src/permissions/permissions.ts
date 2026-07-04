@@ -1,7 +1,7 @@
 import { UserRole } from '../lib/auth';
 import { AppError } from '../lib/AppError';
 
-export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates';
+export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates' | 'ombor_mahsulotlari' | 'ombor_harakatlari';
 export type Action = 'create' | 'read' | 'update' | 'delete';
 
 /**
@@ -45,6 +45,18 @@ const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
   },
   exchange_rates: {
     create: ['FOUNDER', 'MANAGER'],
+    read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
+  },
+  // Ombor katalogi (mahsulot turlarini belgilash) — avto turlari kabi,
+  // FOUNDER/MANAGER boshqaradi.
+  ombor_mahsulotlari: {
+    create: ['FOUNDER', 'MANAGER'],
+    read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
+  },
+  // Ombor harakatlari (kirim/chiqim) — transactions bilan bir xil mantiq:
+  // faqat CHIEF_MECHANIC moddiy qiymatlarni kirita oladi.
+  ombor_harakatlari: {
+    create: ['CHIEF_MECHANIC'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
 };
