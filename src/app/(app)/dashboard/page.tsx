@@ -79,11 +79,16 @@ export default function DashboardPage() {
 
       {/* 1) Operatsion statuslar */}
       <h2 style={{ marginTop: 24, marginBottom: 12 }}>Avtopark holati</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
-        {Object.entries(statusCounts).map(([status, count]) => (
-          <div className="card" key={status}>
-            <h3>{STATUS_LABELS[status] || status}</h3>
-            <p style={{ fontSize: 26, fontWeight: 700, marginTop: 8 }}>{loading ? '—' : count}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
+        {[
+          { key: 'Aktiv', label: 'Liniyada', cls: 'st-liniyada', pulse: true },
+          { key: "Ta'mirlashda", label: "Ta'mirlashda", cls: 'st-tamirlashda', pulse: false },
+          { key: 'Zaxirada', label: 'Zaxirada', cls: 'st-zaxirada', pulse: false },
+          { key: 'Nosoz', label: 'Nosoz', cls: 'st-nosoz', pulse: false },
+        ].map(({ key, label, cls, pulse }) => (
+          <div className={'status-card ' + cls} key={key}>
+            <h3>{pulse && !loading && statusCounts[key] > 0 && <span className="pulsing-dot" />}{label}</h3>
+            <p className="status-number tabular-nums">{loading ? '—' : statusCounts[key]}</p>
           </div>
         ))}
       </div>

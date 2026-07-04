@@ -146,6 +146,54 @@ tr:hover td { background: var(--bg); }
 
 .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
 
+/* ===================== STATUS KARTALARI (Dashboard) ===================== */
+.status-card {
+  background: var(--surface); border-radius: var(--radius-lg); padding: var(--sp-6);
+  box-shadow: var(--shadow-card); border: 1px solid var(--border);
+  border-left-width: 4px; border-left-style: solid;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+.status-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+.status-card .status-number { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin-top: 8px; }
+
+.status-card.st-liniyada { border-left-color: #16A34A; }
+.status-card.st-liniyada .status-number { color: #15803D; }
+.status-card.st-tamirlashda { border-left-color: #D97706; }
+.status-card.st-tamirlashda .status-number { color: #B45309; }
+.status-card.st-zaxirada { border-left-color: #94A3B8; }
+.status-card.st-zaxirada .status-number { color: #475569; }
+.status-card.st-nosoz { border-left-color: #DC2626; background: #FEF2F2; }
+.status-card.st-nosoz .status-number { color: #B91C1C; }
+
+.pulsing-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #16A34A; position: relative; margin-right: 6px;
+}
+.pulsing-dot::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; background: #16A34A;
+  animation: pulse-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+/* ===================== MINIATYURA AVTO RAQAMI (jadvallarda) ===================== */
+.plate-badge {
+  display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #2A3140;
+  border-radius: 6px; padding: 2px 8px 2px 8px; font-family: 'Inter', monospace;
+  font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em; background: #fff;
+}
+.plate-badge .plate-flag { display: flex; flex-direction: column; width: 14px; height: 10px; border-radius: 1px; overflow: hidden; border: 0.5px solid #ddd; }
+
+/* ===================== TEZKOR TUGMA "GLOW" (aktiv filtr) ===================== */
+.btn-glow.btn-primary {
+  box-shadow: 0 0 0 3px rgba(27, 75, 145, 0.16), 0 2px 8px rgba(27, 75, 145, 0.25);
+}
+
+/* Input/select hover holati (nozikroq chegara) */
+.field input:hover, .field select:hover { border-color: var(--border-strong); }
+
 /* "Oynasimon" (glassmorphic) header — tepada yopishib qoladi, ortidagi
    kontent skroll qilinganda xira ko'rinib turadi */
 .app-header {
@@ -271,4 +319,8 @@ tr:hover td { background: var(--bg); }
 }
 @media (min-width: 861px) {
   .bottom-sheet-handle { display: none; }
+  .status-modal-desktop {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 360px; max-width: 90vw; z-index: 71; margin-bottom: 0 !important;
+  }
 }

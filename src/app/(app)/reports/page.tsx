@@ -142,7 +142,7 @@ export default function ReportsPage() {
             <button
               key={p.key}
               type="button"
-              className={'btn' + (activePreset === p.key ? ' btn-primary' : '')}
+              className={'btn' + (activePreset === p.key ? ' btn-primary btn-glow' : '')}
               style={{ padding: '6px 12px', fontSize: 13 }}
               onClick={() => applyPreset(p.key)}
             >

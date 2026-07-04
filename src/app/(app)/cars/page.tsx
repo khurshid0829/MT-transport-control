@@ -7,6 +7,7 @@ import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
 import PlateNumberInput from '@/components/PlateNumberInput';
 import CollapsibleCard from '@/components/CollapsibleCard';
+import PlateBadge from '@/components/PlateBadge';
 
 interface CarDocument {
   id: number; avto_id: number; hujjat_turi: string; amal_qilish_muddati: string;
@@ -49,6 +50,8 @@ export default function CarsPage() {
   const [docForm, setDocForm] = useState({ avto_id: '', hujjat_turi: 'OSAGO', amal_qilish_muddati: '', izoh: '' });
   const [docError, setDocError] = useState<string | null>(null);
   const [docSaving, setDocSaving] = useState(false);
+
+  const [editingStatusFor, setEditingStatusFor] = useState<Car | null>(null);
 
   const [showNewType, setShowNewType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
@@ -143,7 +146,7 @@ export default function CarsPage() {
 
   async function handleStatusChange(id: number, texnik_holat: string) {
     const res = await apiFetch<Car>('/api/cars/' + id, { method: 'PUT', body: JSON.stringify({ texnik_holat }) });
-    if (res.success) loadCars();
+    if (res.success) { setEditingStatusFor(null); loadCars(); }
   }
 
   return (
@@ -297,15 +300,20 @@ export default function CarsPage() {
               {cars.map((c) => (
                 <tr key={c.id}>
                   <td data-label="Turi">{c.tur}</td>
-                  <td data-label="Davlat raqami">{c.davlat_raqami}</td>
+                  <td data-label="Davlat raqami"><PlateBadge value={c.davlat_raqami} /></td>
                   <td data-label="Yili">{c.ishlab_chiqarilgan_yili}</td>
                   <td data-label="Boshlang'ich (km)">{formatNumber(c.boshlangich_yurgan_masofasi)}</td>
                   <td data-label="Joriy (km)">{formatNumber(c.joriy_yurgan_masofasi)}</td>
                   <td data-label="Holati">
                     {canWrite ? (
-                      <select value={c.texnik_holat} onChange={(e) => handleStatusChange(c.id, e.target.value)} style={{ padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 6 }}>
-                        {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
-                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setEditingStatusFor(c)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        title="Holatni o'zgartirish"
+                      >
+                        <StatusBadge status={c.texnik_holat} />
+                      </button>
                     ) : (
                       <StatusBadge status={c.texnik_holat} />
                     )}
@@ -316,6 +324,40 @@ export default function CarsPage() {
           </table>
         )}
       </div>
+
+      {editingStatusFor && (
+        <>
+          <div className="bottom-sheet-backdrop open" onClick={() => setEditingStatusFor(null)} />
+          <div className="card bottom-sheet-card status-modal-desktop open" style={{ padding: 0 }}>
+            <div className="bottom-sheet-handle" />
+            <div style={{ padding: 20 }}>
+              <h2 style={{ marginBottom: 4 }}>Holatni o'zgartirish</h2>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
+                {editingStatusFor.tur} — {editingStatusFor.davlat_raqami}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {STATUSES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="btn"
+                    style={{
+                      justifyContent: 'flex-start', padding: '12px 16px',
+                      ...(s === editingStatusFor.texnik_holat ? { borderColor: 'var(--accent)', background: 'var(--accent-soft)' } : {}),
+                    }}
+                    onClick={() => handleStatusChange(editingStatusFor.id, s)}
+                  >
+                    <StatusBadge status={s} /> {s === editingStatusFor.texnik_holat && <span style={{ marginLeft: 'auto', color: 'var(--accent)' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="btn btn-secondary btn-block" style={{ marginTop: 12 }} onClick={() => setEditingStatusFor(null)}>
+                Bekor qilish
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
