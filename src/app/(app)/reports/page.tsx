@@ -14,25 +14,84 @@ interface CompareData {
   eslatma: string;
 }
 interface Rate { id: number; kurs: string; amal_qilish_sanasi: string; }
+interface ExpenseRow { xarajat_turi: string; valyuta: string; jami_summa: string; }
+interface Car { id: number; davlat_raqami: string; tur: string; }
+
+function toDateInputValue(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Tez tanlov davrlari — foydalanuvchi qo'lda sana kiritmasdan tez filtrlashi uchun. */
+function getPresetRange(preset: string): { dan: string; gacha: string } {
+  const now = new Date();
+  const today = toDateInputValue(now);
+  if (preset === 'bu_oy') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { dan: toDateInputValue(start), gacha: today };
+  }
+  if (preset === 'otgan_oy') {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { dan: toDateInputValue(start), gacha: toDateInputValue(end) };
+  }
+  if (preset === 'bu_yil') {
+    const start = new Date(now.getFullYear(), 0, 1);
+    return { dan: toDateInputValue(start), gacha: today };
+  }
+  return { dan: '', gacha: '' }; // "Barcha vaqt"
+}
 
 export default function ReportsPage() {
   const user = getUser();
   const canSetRate = canSetExchangeRate(user?.rol);
 
   const [data, setData] = useState<CompareData | null>(null);
+  const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [dan, setDan] = useState('');
+  const [gacha, setGacha] = useState('');
+  const [avtoId, setAvtoId] = useState('');
+  const [activePreset, setActivePreset] = useState('barcha');
+
   const [rateForm, setRateForm] = useState('');
   const [rateSaving, setRateSaving] = useState(false);
   const [rateError, setRateError] = useState<string | null>(null);
 
+  async function loadCars() {
+    const res = await apiFetch<Car[]>('/api/cars');
+    if (res.success && res.data) setCars(res.data);
+  }
+
   async function load() {
     setLoading(true);
-    const res = await apiFetch<CompareData>('/api/reports/compare');
-    if (res.success && res.data) setData(res.data);
+    const params = new URLSearchParams();
+    if (dan) params.set('dan', dan);
+    if (gacha) params.set('gacha', gacha + 'T23:59:59');
+    if (avtoId) params.set('avto_id', avtoId);
+    const qs = params.toString() ? '?' + params.toString() : '';
+
+    const [compareRes, expensesRes] = await Promise.all([
+      apiFetch<CompareData>('/api/reports/compare' + qs),
+      apiFetch<ExpenseRow[]>('/api/reports/expenses-by-type' + qs),
+    ]);
+    if (compareRes.success && compareRes.data) setData(compareRes.data);
+    if (expensesRes.success && expensesRes.data) {
+      setExpenses([...expensesRes.data].sort((a, b) => Number(b.jami_summa) - Number(a.jami_summa)));
+    }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadCars(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [dan, gacha, avtoId]);
+
+  function applyPreset(preset: string) {
+    setActivePreset(preset);
+    const range = getPresetRange(preset);
+    setDan(range.dan);
+    setGacha(range.gacha);
+  }
 
   async function handleSetRate(e: React.FormEvent) {
     e.preventDefault();
@@ -53,10 +112,50 @@ export default function ReportsPage() {
   }
 
   const currencies = data ? Object.keys(data.valyutalar) : [];
+  const maxExpense = expenses.length ? Math.max(...expenses.map((e) => Number(e.jami_summa))) : 0;
+
+  const PRESETS = [
+    { key: 'barcha', label: 'Barcha vaqt' },
+    { key: 'bu_oy', label: 'Bu oy' },
+    { key: 'otgan_oy', label: "O'tgan oy" },
+    { key: 'bu_yil', label: 'Bu yil' },
+  ];
 
   return (
     <div>
-      <h1 style={{ marginBottom: 18 }}>Hisobotlar — valyuta bo'yicha taqqoslash</h1>
+      <h1 style={{ marginBottom: 18 }}>Hisobotlar</h1>
+
+      {/* Davr va avto bo'yicha filtr paneli */}
+      <div className="card" style={{ marginBottom: 20, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {PRESETS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              className={'btn' + (activePreset === p.key ? ' btn-primary' : '')}
+              style={{ padding: '6px 12px', fontSize: 13 }}
+              onClick={() => applyPreset(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: 150 }}>
+          <label>Dan</label>
+          <input type="date" value={dan} onChange={(e) => { setDan(e.target.value); setActivePreset('custom'); }} />
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: 150 }}>
+          <label>Gacha</label>
+          <input type="date" value={gacha} onChange={(e) => { setGacha(e.target.value); setActivePreset('custom'); }} />
+        </div>
+        <div className="field" style={{ marginBottom: 0, minWidth: 200 }}>
+          <label>Avto (tahlil uchun)</label>
+          <select value={avtoId} onChange={(e) => setAvtoId(e.target.value)}>
+            <option value="">Barcha avtolar</option>
+            {cars.map((c) => <option key={c.id} value={c.id}>{c.tur} — {c.davlat_raqami}</option>)}
+          </select>
+        </div>
+      </div>
 
       {canSetRate && (
         <div className="card" style={{ marginBottom: 20, maxWidth: 420 }}>
@@ -79,7 +178,7 @@ export default function ReportsPage() {
       {loading ? (
         <div className="empty-state">Yuklanmoqda...</div>
       ) : currencies.length === 0 ? (
-        <div className="empty-state">Hali tranzaksiya yo'q.</div>
+        <div className="empty-state">Ushbu davr/avto uchun tranzaksiya topilmadi.</div>
       ) : (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
@@ -112,6 +211,32 @@ export default function ReportsPage() {
               );
             })}
           </div>
+
+          {expenses.length > 0 && (
+            <div className="card" style={{ marginBottom: 20 }}>
+              <h2 style={{ marginBottom: 4 }}>Xarajatlar taqsimoti (ko'pdan kamga)</h2>
+              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
+                Qaysi xarajat turi budjetning eng katta qismini tashkil qilishini ko'rsatadi.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {expenses.map((e, i) => (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                      <span>{e.xarajat_turi} <span style={{ color: 'var(--text-muted)' }}>({e.valyuta})</span></span>
+                      <b>{formatNumber(e.jami_summa)}</b>
+                    </div>
+                    <div style={{ height: 8, background: 'var(--bg)', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', width: (Number(e.jami_summa) / maxExpense * 100) + '%',
+                        background: 'var(--accent)', borderRadius: 4,
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="alert" style={{ background: 'var(--bg)', color: 'var(--text-secondary)' }}>
             {data!.eslatma}
           </div>
