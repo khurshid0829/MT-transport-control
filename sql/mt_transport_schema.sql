@@ -458,3 +458,40 @@ CREATE TRIGGER trg_audit_ombor_harakatlari
 ALTER TABLE users
     ADD COLUMN muvaffaqiyatsiz_urinishlar INT NOT NULL DEFAULT 0,
     ADD COLUMN bloklangan_gacha TIMESTAMP;
+
+-- =====================================================================
+-- 19. AUDIT LOG TOZALASH — users jadvali uchun alohida trigger.
+--     Login paytida ichki hisoblagichlar (muvaffaqiyatsiz_urinishlar,
+--     bloklangan_gacha) yangilanishi HAR safar audit_log'ga keraksiz
+--     "UPDATE_USERS" yozuvi qo'shib, jurnalni chalkashtirar edi.
+--     Endi FAQAT haqiqiy o'zgarishlar (ism, rol, status, parol) yoziladi.
+-- =====================================================================
+CREATE OR REPLACE FUNCTION log_audit_trail_users() RETURNS TRIGGER AS $$
+DECLARE
+  eski_tozalangan JSONB;
+  yangi_tozalangan JSONB;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    eski_tozalangan := to_jsonb(OLD) - 'muvaffaqiyatsiz_urinishlar' - 'bloklangan_gacha';
+    yangi_tozalangan := to_jsonb(NEW) - 'muvaffaqiyatsiz_urinishlar' - 'bloklangan_gacha';
+    IF eski_tozalangan = yangi_tozalangan THEN
+      RETURN NEW; -- faqat ichki hisoblagich o'zgargan — bu muhim emas, yozilmaydi
+    END IF;
+  END IF;
+
+  INSERT INTO audit_log (user_id, harakat, eski_malumot, yangi_malumot)
+  VALUES (
+    get_current_user_id(),
+    TG_OP || '_USERS',
+    CASE WHEN TG_OP = 'INSERT' THEN NULL ELSE to_jsonb(OLD) END,
+    CASE WHEN TG_OP = 'DELETE' THEN NULL ELSE to_jsonb(NEW) END
+  );
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_audit_users ON users;
+CREATE TRIGGER trg_audit_users
+    AFTER INSERT OR UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION log_audit_trail_users();

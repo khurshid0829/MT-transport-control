@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { pool } from '../lib/db';
+import { pool, getClientWithUser } from '../lib/db';
 import { AppError } from '../lib/AppError';
 import { z } from 'zod';
 import { loginSchema, registerSchema } from '../validators/auth.validators';
@@ -116,6 +116,13 @@ export const authService = {
     if (!matches) throw AppError.unauthorized("Joriy parol noto'g'ri");
 
     const newHash = await bcrypt.hash(yangiParol, SALT_ROUNDS);
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+
+    // getClientWithUser orqali — audit_log'da "kim o'zgartirdi" to'g'ri ko'rinishi uchun
+    const client = await getClientWithUser(userId);
+    try {
+      await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+    } finally {
+      client.release();
+    }
   },
 };
