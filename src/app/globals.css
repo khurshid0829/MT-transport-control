@@ -20,8 +20,16 @@
   --warning: #B0680A;
   --warning-bg: #FDF3E2;
   --radius: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
   --shadow-card: 0 1px 2px rgba(20, 24, 31, 0.04), 0 1px 8px rgba(20, 24, 31, 0.04);
+
+  /* 8px grid — barcha spacing shu qadamlarga asoslanadi */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
 }
 
 * { box-sizing: border-box; }
@@ -42,20 +50,31 @@ html, body {
 * { min-width: 0; }
 
 h1, h2, h3 { font-weight: 600; margin: 0; color: var(--text-primary); letter-spacing: -0.01em; }
-h1 { font-size: 22px; }
-h2 { font-size: 16px; }
+h1 { font-size: 22px; font-weight: 700; }
+h2 { font-size: 17px; font-weight: 600; }
 h3 { font-size: 12.5px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-button, input, select, textarea { font-family: inherit; font-size: 14px; }
+button { font-family: inherit; font-size: 14px; }
+
+/*
+ * MUHIM (iOS Safari zoom bug): input/select uchun font-size KAMIDA 16px
+ * bo'lishi SHART, aks holda iPhone'da maydonga bosilganda Safari sahifani
+ * avtomatik kattalashtirib yuboradi (zoom). 14px shu muammoni keltirib
+ * chiqargan edi.
+ */
+input, select, textarea {
+  font-family: inherit;
+  font-size: 16px;
+}
 
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 9px 16px; border-radius: var(--radius); border: 1px solid var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4); border-radius: var(--radius); border: 1px solid var(--border-strong);
   background: var(--surface); color: var(--text-primary); cursor: pointer;
-  font-weight: 500; transition: background 0.12s ease, transform 0.08s ease;
+  font-weight: 500; font-size: 14px; transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
 }
 .btn:hover { background: var(--bg); }
 .btn:active { transform: scale(0.98); }
@@ -66,19 +85,39 @@ button, input, select, textarea { font-family: inherit; font-size: 14px; }
 .btn-danger:hover { opacity: 0.9; }
 .btn-block { width: 100%; }
 
-.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
-.field label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-.field input, .field select {
-  padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius);
-  background: var(--surface); color: var(--text-primary);
+/* Ikkinchi darajali (bekor qilish kabi) amallar uchun — hech qachon
+   asosiy tugma bilan bir xil "og'irlikda" bo'lmasligi kerak. */
+.btn-secondary {
+  background: transparent; border-color: transparent; color: var(--text-secondary);
 }
-.field input:focus, .field select:focus {
+.btn-secondary:hover { background: var(--bg); color: var(--text-primary); }
+
+.field { display: flex; flex-direction: column; gap: var(--sp-1); margin-bottom: var(--sp-4); }
+.field label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+
+.field input, .field select, .field textarea {
+  padding: 12px var(--sp-4); border: 1px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--text-primary); width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
   outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Select uchun maxsus (nozik) ochiladigan strelka */
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
 }
 
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-  padding: 20px; box-shadow: var(--shadow-card);
+  padding: var(--sp-6); box-shadow: var(--shadow-card);
 }
 
 .badge {
@@ -89,18 +128,50 @@ button, input, select, textarea { font-family: inherit; font-size: 14px; }
 .badge-warning { background: var(--warning-bg); color: var(--warning); }
 .badge-neutral { background: var(--bg); color: var(--text-secondary); }
 
-.alert { padding: 12px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 14px; }
+.alert { padding: var(--sp-3) var(--sp-4); border-radius: var(--radius); font-size: 13px; margin-bottom: var(--sp-4); }
 .alert-error { background: var(--danger-bg); color: var(--danger); }
 .alert-success { background: var(--success-bg); color: var(--success); }
 
 table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+th, td { text-align: left; padding: 11px var(--sp-4); border-bottom: 1px solid var(--border); font-size: 13.5px; }
 th { color: var(--text-secondary); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
 tr:hover td { background: var(--bg); }
 
 .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
 
+/* ===================== YIG'ILUVCHI (COLLAPSIBLE) PANEL ===================== */
+/* CSS-only silliq animatsiya: grid-template-rows 0fr -> 1fr texnikasi
+   (JS orqali balandlikni o'lchashga hojat qoldirmaydi, "sakrash" bo'lmaydi) */
+.collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+.collapsible.open { grid-template-rows: 1fr; }
+.collapsible > div { overflow: hidden; }
+
+.collapsible-chevron {
+  transition: transform 0.22s ease;
+}
+.collapsible-chevron.open { transform: rotate(180deg); }
+
 /* ===================== MOBIL MOSLASHUV ===================== */
+
+/* Sahifa asosiy konteyner padding: 16px mobil / 32px desktop */
+.page-container { padding: var(--sp-4); }
+@media (min-width: 768px) {
+  .page-container { padding: var(--sp-8); }
+}
+
+/* Forma ustunlari: mobilda har doim 1 ustun, desktopda balanslangan grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4);
+}
+@media (min-width: 560px) {
+  .form-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
 
 /* Jadval -> kartochka ko'rinishi (kichik ekranlarda) */
 @media (max-width: 720px) {
@@ -110,16 +181,16 @@ tr:hover td { background: var(--bg); }
   }
   table.responsive-table thead { display: none; }
   table.responsive-table tr {
-    margin-bottom: 12px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+    margin-bottom: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius-lg);
     overflow: hidden; background: var(--surface); box-shadow: var(--shadow-card);
   }
   table.responsive-table td {
-    text-align: right; padding: 10px 14px 10px 46%; position: relative; border-bottom: 1px solid var(--border);
+    text-align: right; padding: 10px var(--sp-4) 10px 46%; position: relative; border-bottom: 1px solid var(--border);
     min-height: 20px;
   }
   table.responsive-table td:last-child { border-bottom: none; }
   table.responsive-table td::before {
-    content: attr(data-label); position: absolute; left: 14px; text-align: left;
+    content: attr(data-label); position: absolute; left: var(--sp-4); text-align: left;
     font-weight: 600; color: var(--text-secondary); font-size: 12px;
   }
   table.responsive-table td:empty::before { display: none; }
@@ -137,7 +208,7 @@ tr:hover td { background: var(--bg); }
     box-shadow: 0 -2px 12px rgba(20,24,31,0.06);
   }
   .desktop-sidebar { display: none !important; }
-  .app-main-content { padding-bottom: 84px !important; padding-left: 14px !important; padding-right: 14px !important; }
+  .app-main-content { padding-bottom: 84px !important; }
 }
 
 .tabbar-item {

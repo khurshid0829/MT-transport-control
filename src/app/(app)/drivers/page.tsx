@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { getUser, canWriteCars } from '@/lib/auth-client';
+import CollapsibleCard from '@/components/CollapsibleCard';
+import PhoneInput from '@/components/PhoneInput';
 
 interface Driver {
   id: number;
@@ -68,24 +70,23 @@ export default function DriversPage() {
         <h1>Haydovchilar ({drivers.length})</h1>
         {canWrite && (
           <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Bekor qilish' : '+ Yangi haydovchi'}
+            {showForm ? 'Yopish' : "+ Yangi haydovchi"}
           </button>
         )}
       </div>
 
-      {showForm && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <h2 style={{ marginBottom: 14 }}>Yangi haydovchi qo'shish</h2>
+      {canWrite && (
+        <CollapsibleCard open={showForm} onToggle={() => setShowForm((v) => !v)} title="Yangi haydovchi qo'shish">
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            <div className="form-grid">
               <div className="field">
                 <label>Ism sharifi</label>
                 <input value={form.ism_sharif} onChange={(e) => setForm({ ...form, ism_sharif: e.target.value })} required />
               </div>
               <div className="field">
                 <label>Telefon raqami</label>
-                <input value={form.telefon_raqam} onChange={(e) => setForm({ ...form, telefon_raqam: e.target.value })} placeholder="+998 90 123 45 67" required />
+                <PhoneInput value={form.telefon_raqam} onChange={(v) => setForm({ ...form, telefon_raqam: v })} />
               </div>
               <div className="field">
                 <label>Biriktirilgan avto (ixtiyoriy)</label>
@@ -95,11 +96,16 @@ export default function DriversPage() {
                 </select>
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saqlanmoqda...' : 'Saqlash'}
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                Bekor qilish
+              </button>
+            </div>
           </form>
-        </div>
+        </CollapsibleCard>
       )}
 
       <div className="card" style={{ padding: 0 }}>

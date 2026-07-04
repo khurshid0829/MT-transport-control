@@ -103,7 +103,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="app-main-content" style={{ flex: 1, padding: 24 }}>{children}</main>
+        <main className="app-main-content page-container" style={{ flex: 1 }}>{children}</main>
       </div>
 
       {/* Mobil pastki tab-bar */}

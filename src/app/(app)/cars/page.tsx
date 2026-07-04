@@ -6,6 +6,7 @@ import { getUser, canWriteCars } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
 import PlateNumberInput from '@/components/PlateNumberInput';
+import CollapsibleCard from '@/components/CollapsibleCard';
 
 interface Car {
   id: number;
@@ -84,17 +85,16 @@ export default function CarsPage() {
         <h1>Avtolar ({cars.length})</h1>
         {canWrite && (
           <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Bekor qilish' : '+ Yangi avto'}
+            {showForm ? 'Yopish' : "+ Yangi avto"}
           </button>
         )}
       </div>
 
-      {showForm && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <h2 style={{ marginBottom: 14 }}>Yangi avto qo'shish</h2>
+      {canWrite && (
+        <CollapsibleCard open={showForm} onToggle={() => setShowForm((v) => !v)} title="Yangi avto qo'shish">
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            <div className="form-grid">
               <div className="field">
                 <label>Turi</label>
                 <select value={form.tur} onChange={(e) => setForm({ ...form, tur: e.target.value })}>
@@ -118,11 +118,16 @@ export default function CarsPage() {
                 <NumberInput value={form.joriy_yurgan_masofasi} onChange={(v) => setForm({ ...form, joriy_yurgan_masofasi: v })} required />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saqlanmoqda...' : 'Saqlash'}
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                Bekor qilish
+              </button>
+            </div>
           </form>
-        </div>
+        </CollapsibleCard>
       )}
 
       <div className="card" style={{ padding: 0 }}>

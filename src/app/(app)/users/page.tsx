@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { getUser } from '@/lib/auth-client';
+import CollapsibleCard from '@/components/CollapsibleCard';
 
 const ROLES = ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'];
 const ROLE_LABELS: Record<string, string> = {
@@ -63,16 +64,15 @@ export default function UsersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <h1>Foydalanuvchilar ({users.length})</h1>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Bekor qilish' : '+ Yangi foydalanuvchi'}
+          {showForm ? 'Yopish' : "+ Yangi foydalanuvchi"}
         </button>
       </div>
 
-      {showForm && (
-        <div className="card" style={{ marginBottom: 20, maxWidth: 480 }}>
-          <h2 style={{ marginBottom: 14 }}>Yangi foydalanuvchi qo'shish</h2>
-          {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-          <form onSubmit={handleCreate}>
+      <CollapsibleCard open={showForm} onToggle={() => setShowForm((v) => !v)} title="Yangi foydalanuvchi qo'shish">
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+        <form onSubmit={handleCreate}>
+          <div className="form-grid">
             <div className="field">
               <label>Ism sharifi</label>
               <input value={form.ism_sharif} onChange={(e) => setForm({ ...form, ism_sharif: e.target.value })} required />
@@ -91,12 +91,29 @@ export default function UsersPage() {
                 {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]} ({r})</option>)}
               </select>
             </div>
-            <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
+          </div>
+
+          {/* 7-taklif: har bir rol nima qila olishi haqida yo'riqnoma */}
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 16 }}>
+            <h3 style={{ marginBottom: 10 }}>Rol huquqlari — qisqacha</h3>
+            <div style={{ display: 'grid', gap: 8, fontSize: 13 }}>
+              <div><b>Asoschi (FOUNDER):</b> hamma narsani ko'radi, foydalanuvchi/audit boshqaradi. Tranzaksiya <u>yoza olmaydi</u>.</div>
+              <div><b>Menejer (MANAGER):</b> avto/haydovchi qo'shadi, hisobot ko'radi. Tranzaksiya <u>yoza olmaydi</u>.</div>
+              <div><b>Bosh mexanik (CHIEF_MECHANIC):</b> yagona rol — tranzaksiya (xarajat) <u>kirita oladi</u>. Avto/haydovchi qo'sha olmaydi.</div>
+              <div><b>Mexanik (MECHANIC):</b> faqat ko'rish huquqi — hech narsa yoza olmaydi, hisobot/audit ko'rmaydi.</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Yaratilmoqda...' : 'Foydalanuvchi yaratish'}
             </button>
-          </form>
-        </div>
-      )}
+            <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+              Bekor qilish
+            </button>
+          </div>
+        </form>
+      </CollapsibleCard>
 
       <div className="card" style={{ padding: 0 }}>
         {loading ? (

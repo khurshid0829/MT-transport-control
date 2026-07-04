@@ -8,42 +8,48 @@ interface NumberInputProps {
   onChange: (value: number) => void;
   placeholder?: string;
   required?: boolean;
-  min?: number;
 }
 
 /**
- * Raqam kiritish uchun maxsus input: foydalanuvchi yozayotganda son
- * avtomatik "1 000" ko'rinishida formatlanadi, LEKIN kursor pozitsiyasi
- * saqlanadi — ya'ni foydalanuvchi raqam o'rtasida turib yozsa, kursor
- * boshiga "sakrab" ketmaydi (talab qilingan tuzatish).
+ * Raqam kiritish uchun maxsus input — "1 000" ko'rinishida formatlaydi,
+ * lekin kursor pozitsiyasini SINXRON (bir xil hodisa ichida) to'g'irlaydi.
+ *
+ * MUHIM (tuzatish): avvalgi versiya kursorni requestAnimationFrame orqali
+ * KEYINROQ tuzatishga urinar edi — lekin React controlled input'ni qayta
+ * render qilganda brauzer kursorni avtomatik oxiriga surib qo'yadi, va bu
+ * bizning tuzatishimizdan OLDIN sodir bo'lardi (poyga holati/race condition).
+ * Natijada raqamlar noto'g'ri joyga qo'shilib, masalan "1989" o'rniga
+ * "0189" chiqardi. Endi formatlash VA kursorni joylashtirish bitta
+ * sinxron funksiyada, DOM'ga to'g'ridan-to'g'ri, React qayta render
+ * qilishidan OLDIN amalga oshiriladi — shu bilan poyga holati yo'qoladi.
  */
-export default function NumberInput({ value, onChange, placeholder, required, min }: NumberInputProps) {
+export default function NumberInput({ value, onChange, placeholder, required }: NumberInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const displayValue = formatNumber(value);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.target;
-    const prevCursor = input.selectionStart ?? input.value.length;
-    const prevValue = input.value;
+    const cursor = input.selectionStart ?? input.value.length;
+    const digitsBeforeCursor = input.value.slice(0, cursor).replace(/\D/g, '').length;
 
-    // Kursordan oldingi qismdagi raqamlar sonini hisoblaymiz (probel hisobga kirmaydi)
-    const digitsBeforeCursor = prevValue.slice(0, prevCursor).replace(/\D/g, '').length;
+    const numeric = parseFormattedNumber(input.value);
+    const formatted = formatNumber(numeric);
 
-    const numeric = parseFormattedNumber(prevValue);
-    onChange(numeric);
-
-    // Formatlangandan keyin, xuddi shuncha raqamdan keyingi pozitsiyaga kursorni qaytaramiz
-    requestAnimationFrame(() => {
-      if (!inputRef.current) return;
-      const newValue = inputRef.current.value;
+    // DOM'ni darhol (sinxron) to'g'irlaymiz — React keyinroq qayta render
+    // qilganda qiymat allaqachon bir xil bo'lgani uchun kursorga tegmaydi.
+    input.value = formatted;
+    let pos = 0;
+    if (digitsBeforeCursor > 0) {
+      pos = formatted.length;
       let count = 0;
-      let pos = 0;
-      for (; pos < newValue.length; pos++) {
-        if (/\d/.test(newValue[pos])) count++;
-        if (count >= digitsBeforeCursor) { pos++; break; }
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) count++;
+        if (count >= digitsBeforeCursor) { pos = i + 1; break; }
       }
-      inputRef.current.setSelectionRange(pos, pos);
-    });
+    }
+    input.setSelectionRange(pos, pos);
+
+    onChange(numeric);
   }
 
   return (
@@ -55,7 +61,6 @@ export default function NumberInput({ value, onChange, placeholder, required, mi
       onChange={handleChange}
       placeholder={placeholder}
       required={required}
-      data-min={min}
     />
   );
 }

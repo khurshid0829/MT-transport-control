@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/api-client';
 import { getUser, canWriteTransactions } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
+import CollapsibleCard from '@/components/CollapsibleCard';
 
 interface Tx {
   id: number;
@@ -105,7 +106,7 @@ export default function TransactionsPage() {
         <h1>Tranzaksiyalar ({txs.length})</h1>
         {canWrite ? (
           <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? 'Bekor qilish' : '+ Yangi tranzaksiya'}
+            {showForm ? 'Yopish' : "+ Yangi tranzaksiya"}
           </button>
         ) : (
           <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -114,12 +115,11 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      {showForm && canWrite && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <h2 style={{ marginBottom: 14 }}>Yangi tranzaksiya</h2>
+      {canWrite && (
+        <CollapsibleCard open={showForm} onToggle={() => setShowForm((v) => !v)} title="Yangi tranzaksiya">
           {error && <div className="alert alert-error">{error}</div>}
           <form onSubmit={handleCreate}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+            <div className="form-grid">
               <div className="field">
                 <label>Turi</label>
                 <select value={form.turi} onChange={(e) => setForm({ ...form, turi: e.target.value, xarajat_turi: e.target.value === 'Kirim' ? 'Kirim_Moliya' : "Ta'mirlash" })}>
@@ -164,30 +164,35 @@ export default function TransactionsPage() {
                 <input value={form.tavsif} onChange={(e) => setForm({ ...form, tavsif: e.target.value })} />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saqlanmoqda...' : 'Saqlash'}
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>
+                Bekor qilish
+              </button>
+            </div>
           </form>
-        </div>
+        </CollapsibleCard>
       )}
 
-      <div className="card" style={{ padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Xarajat turi:</label>
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} style={{ padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 8 }}>
+      <div className="card" style={{ padding: 16, marginBottom: 20, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="field" style={{ marginBottom: 0, minWidth: 180 }}>
+          <label>Xarajat turi</label>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
             <option value="">Barchasi</option>
             {XARAJAT_TURLARI.filter((x) => x !== 'Kirim_Moliya').map((x) => <option key={x} value={x}>{x}</option>)}
           </select>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Saralash:</label>
-          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as any)} style={{ padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 8 }}>
+        <div className="field" style={{ marginBottom: 0, minWidth: 200 }}>
+          <label>Saralash</label>
+          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as any)}>
             <option value="yangi">Sana (yangi birinchi)</option>
             <option value="summa_kop">Summa: ko'pdan kamga</option>
             <option value="summa_kam">Summa: kamdan ko'pga</option>
           </select>
         </div>
-        <span style={{ fontSize: 12.5, color: 'var(--text-muted)', marginLeft: 'auto' }}>{displayedTxs.length} ta natija</span>
+        <span style={{ fontSize: 12.5, color: 'var(--text-muted)', marginLeft: 'auto', paddingBottom: 12 }}>{displayedTxs.length} ta natija</span>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
