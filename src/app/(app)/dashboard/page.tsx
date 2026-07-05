@@ -18,6 +18,8 @@ interface CarDoc { id: number; hujjat_turi: string; davlat_raqami: string; tur: 
 interface Mahsulot { id: number; nomi: string; joriy_qoldiq: string; minimal_qoldiq: string; olchov_birligi: string; }
 interface Tx { turi: string; valyuta: string; summa: string; created_at: string }
 interface Holat { davlat_raqami: string; tur: string; qism_nomi: string; holat: string; qolgan_masofa: number; }
+interface CurrencyStat { kirim: number; chiqim: number; sof_balans: number; }
+interface CompareData { valyutalar: Record<string, CurrencyStat>; }
 
 function toDateInputValue(d: Date) { return d.toISOString().slice(0, 10); }
 
@@ -30,17 +32,20 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState<Mahsulot[]>([]);
   const [weekly, setWeekly] = useState<Tx[]>([]);
   const [xizmatHolatlari, setXizmatHolatlari] = useState<Holat[]>([]);
+  const [oylikHolat, setOylikHolat] = useState<CompareData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const dan = toDateInputValue(new Date(Date.now() - 6 * 24 * 3600 * 1000));
-      const [carsRes, docsRes, omborRes, txRes, xizmatRes] = await Promise.all([
+      const oyBoshi = toDateInputValue(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+      const [carsRes, docsRes, omborRes, txRes, xizmatRes, oylikRes] = await Promise.all([
         apiFetch<Car[]>('/api/cars'),
         apiFetch<CarDoc[]>('/api/car-documents?expiring_days=10'),
         apiFetch<Mahsulot[]>('/api/ombor/mahsulotlar'),
         apiFetch<Tx[]>('/api/transactions?dan=' + dan),
         apiFetch<Holat[]>('/api/tamirlash-normalari/holatlar'),
+        apiFetch<CompareData>('/api/reports/compare?dan=' + oyBoshi),
       ]);
       if (carsRes.success && carsRes.data) setCars(carsRes.data);
       if (docsRes.success && docsRes.data) setExpiringDocs(docsRes.data);
@@ -51,6 +56,7 @@ export default function DashboardPage() {
       if (xizmatRes.success && xizmatRes.data) {
         setXizmatHolatlari(xizmatRes.data.filter((h) => h.holat === 'Kechikkan'));
       }
+      if (oylikRes.success && oylikRes.data) setOylikHolat(oylikRes.data);
       setLoading(false);
     }
     load();
@@ -82,6 +88,42 @@ export default function DashboardPage() {
       <p style={{ color: 'var(--text-secondary)', marginTop: 6 }}>
         Rolingiz: <span className="badge badge-neutral">{ROLE_LABELS[user?.rol || ''] || user?.rol}</span>
       </p>
+
+      {/* 0) Oylik moliyaviy holat — "byudjetda pul bor-yo'qligi" savoliga tezkor javob */}
+      {canReports && oylikHolat && (
+        <>
+          <h2 style={{ marginTop: 24, marginBottom: 12 }}>Bu oy — moliyaviy holat</h2>
+          {Object.keys(oylikHolat.valyutalar).length === 0 ? (
+            <div className="card"><p style={{ color: 'var(--text-muted)', margin: 0 }}>Bu oyda hali tranzaksiya yo'q.</p></div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+              {Object.entries(oylikHolat.valyutalar).map(([cur, v]) => (
+                <div className="card" key={cur}>
+                  <h3>{cur}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 13.5 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Kirim</span>
+                    <span className="tabular-nums" style={{ color: 'var(--success)', fontWeight: 600 }}>{formatNumber(v.kirim)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 13.5 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Chiqim</span>
+                    <span className="tabular-nums" style={{ color: 'var(--danger)', fontWeight: 600 }}>{formatNumber(v.chiqim)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>Qoldiq (balans)</span>
+                    <span className="tabular-nums" style={{ fontWeight: 800, fontSize: 18, color: v.sof_balans >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                      {formatNumber(v.sof_balans)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+            UZS va USD alohida hisoblangan — hech qachon qo'shib yuborilmaydi. To'liq tarix uchun{' '}
+            <a href="/reports">Hisobotlar</a> sahifasiga o'ting.
+          </p>
+        </>
+      )}
 
       {/* 1) Operatsion statuslar */}
       <h2 style={{ marginTop: 24, marginBottom: 12 }}>Avtopark holati</h2>
