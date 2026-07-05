@@ -252,51 +252,78 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {rentabellik.length > 0 && (
-            <div className="card" style={{ marginBottom: 20, padding: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 0', flexWrap: 'wrap', gap: 8 }}>
-                <h2>Avto rentabelligi va samaradorlik</h2>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <select
-                    value={rentabellikSort}
-                    onChange={(e) => setRentabellikSort(e.target.value as any)}
-                    style={{ padding: '5px 10px', fontSize: 12.5, border: '1px solid var(--border-strong)', borderRadius: 8 }}
-                  >
-                    <option value="foyda">Sof foyda bo'yicha</option>
-                    <option value="xarajat_km">100km xarajat bo'yicha</option>
-                  </select>
-                  <button className="btn" style={{ padding: '5px 10px', fontSize: 12.5 }} onClick={() => exportToExcel(rentabellik, 'avto_rentabelligi')}>
-                    <Download size={14} /> Excel
-                  </button>
+          {rentabellik.length > 0 && (() => {
+            const hasIncomeData = rentabellik.some((r) => r.kirim > 0);
+            const sorted = [...rentabellik].sort((a, b) => {
+              if (!hasIncomeData) return b.chiqim - a.chiqim; // daromad yo'q — eng ko'p xarajat qilgan avto tepada
+              return rentabellikSort === 'foyda' ? b.sof_foyda - a.sof_foyda : (b.xarajat_100km ?? 0) - (a.xarajat_100km ?? 0);
+            });
+            return (
+              <div className="card" style={{ marginBottom: 20, padding: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 20px 0', flexWrap: 'wrap', gap: 8 }}>
+                  <h2>{hasIncomeData ? 'Avto rentabelligi va samaradorlik' : 'Avto xarajatlari reytingi va samaradorlik'}</h2>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {hasIncomeData && (
+                      <select
+                        value={rentabellikSort}
+                        onChange={(e) => setRentabellikSort(e.target.value as any)}
+                        style={{ padding: '5px 10px', fontSize: 12.5, border: '1px solid var(--border-strong)', borderRadius: 8 }}
+                      >
+                        <option value="foyda">Sof foyda bo'yicha</option>
+                        <option value="xarajat_km">100km xarajat bo'yicha</option>
+                      </select>
+                    )}
+                    <button className="btn" style={{ padding: '5px 10px', fontSize: 12.5 }} onClick={() => exportToExcel(rentabellik, 'avto_xarajatlari')}>
+                      <Download size={14} /> Excel
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '8px 20px 0' }}>
-                Sof foyda = Kirim − Chiqim (valyuta bo'yicha alohida). 100 km xarajat — shu avto
-                bosgan har 100 km uchun o'rtacha necha pul sarflangani.
-              </p>
-              <table className="responsive-table" style={{ marginTop: 12 }}>
-                <thead>
-                  <tr><th>Avto</th><th>Valyuta</th><th>Kirim</th><th>Chiqim</th><th>Sof foyda</th><th>100km xarajat</th></tr>
-                </thead>
-                <tbody>
-                  {[...rentabellik]
-                    .sort((a, b) => rentabellikSort === 'foyda' ? b.sof_foyda - a.sof_foyda : (b.xarajat_100km ?? 0) - (a.xarajat_100km ?? 0))
-                    .map((r, i) => (
+
+                {!hasIncomeData && (
+                  <div style={{ margin: '10px 20px 0', padding: '10px 14px', background: 'var(--warning-bg)', color: 'var(--warning)', borderRadius: 8, fontSize: 12.5 }}>
+                    ℹ️ Hozircha daromad (Kirim) avtolarga alohida bog'lab kiritilmagani uchun, "sof foyda" hisoblanmaydi —
+                    bu jadval faqat <b>xarajatlarni</b> ko'rsatadi. Agar har bir reys/ish daromadini tegishli avtoga
+                    bog'lab kiritsangiz (tranzaksiya formasida "Avto" maydonini tanlab), bu yerda haqiqiy rentabellik
+                    (foyda) ham chiqadi.
+                  </div>
+                )}
+                {hasIncomeData && (
+                  <p style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '8px 20px 0' }}>
+                    Sof foyda = Kirim − Chiqim (valyuta bo'yicha alohida, faqat shu avtoga bog'lab kiritilgan yozuvlar bo'yicha).
+                    100 km xarajat — shu avto bosgan har 100 km uchun o'rtacha necha pul sarflangani.
+                  </p>
+                )}
+
+                <table className="responsive-table" style={{ marginTop: 12 }}>
+                  <thead>
+                    <tr>
+                      <th>Avto</th><th>Valyuta</th>
+                      {hasIncomeData && <th>Kirim</th>}
+                      <th>Chiqim</th>
+                      {hasIncomeData && <th>Sof foyda</th>}
+                      <th>100km xarajat</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sorted.map((r, i) => (
                       <tr key={i}>
                         <td data-label="Avto">{r.tur} — {r.davlat_raqami}</td>
                         <td data-label="Valyuta">{r.valyuta}</td>
-                        <td data-label="Kirim" style={{ color: 'var(--success)' }}>{formatNumber(r.kirim)}</td>
+                        {hasIncomeData && <td data-label="Kirim" style={{ color: 'var(--success)' }}>{formatNumber(r.kirim)}</td>}
                         <td data-label="Chiqim" style={{ color: 'var(--danger)' }}>{formatNumber(r.chiqim)}</td>
-                        <td data-label="Sof foyda" style={{ fontWeight: 600, color: r.sof_foyda >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                          {formatNumber(r.sof_foyda)}
-                        </td>
+                        {hasIncomeData && (
+                          <td data-label="Sof foyda" style={{ fontWeight: 600, color: r.sof_foyda >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                            {formatNumber(r.sof_foyda)}
+                          </td>
+                        )}
                         <td data-label="100km xarajat">{r.xarajat_100km !== null ? formatNumber(r.xarajat_100km) : '—'}</td>
                       </tr>
                     ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
 
           <div className="alert" style={{ background: 'var(--bg)', color: 'var(--text-secondary)' }}>
             {data!.eslatma}

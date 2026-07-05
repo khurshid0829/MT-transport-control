@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Truck, Users as UsersIcon, Receipt, BarChart3,
-  History, UserCog, LogOut, MoreHorizontal, X, Package, Sparkles, KeyRound,
+  History, UserCog, LogOut, MoreHorizontal, X, Package, Sparkles, KeyRound, Wrench,
 } from 'lucide-react';
-import { AuthUser, getToken, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
+import { AuthUser, getUser, clearSession, canViewAudit, canViewReports, canManageUsers } from '@/lib/auth-client';
 import Logo from './Logo';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -38,9 +38,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
     const u = getUser();
-    if (!token || !u) {
+    if (!u) {
       router.replace('/login');
       return;
     }
@@ -52,9 +51,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return <div style={{ padding: 40, color: 'var(--text-secondary)' }}>Yuklanmoqda...</div>;
   }
 
-  function handleLogout() {
-    clearSession();
-    router.replace('/login');
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' }); // httpOnly cookie'ni faqat server tozalay oladi
+    } finally {
+      clearSession();
+      router.replace('/login');
+    }
   }
 
   const allItems = [
@@ -64,6 +67,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: '/drivers', label: 'Haydovchilar', icon: UsersIcon, show: true },
     { href: '/transactions', label: 'Tranzaksiya', icon: Receipt, show: true },
     { href: '/ombor', label: 'Ombor', icon: Package, show: true },
+    { href: '/texnik-xizmat', label: 'Texnik xizmat', icon: Wrench, show: true },
     { href: '/reports', label: 'Hisobotlar', icon: BarChart3, show: canViewReports(user.rol) },
     { href: '/audit', label: 'Audit log', icon: History, show: canViewAudit(user.rol) },
     { href: '/users', label: 'Foydalanuvchilar', icon: UserCog, show: canManageUsers(user.rol) },

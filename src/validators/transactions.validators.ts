@@ -24,6 +24,7 @@ export const createTransactionSchema = z
     avto_id: z.number().int().positive().optional(),
     xarajat_turi: z.enum(XARAJAT_TURLARI),
     amaldagi_yurgan_masofa: z.number().int().min(0).optional(),
+    almashtirilgan_qism_id: z.number().int().positive().optional(),
     tavsif: z.string().max(2000).optional(),
   })
   .refine((d) => !(d.turi === 'Kirim' && d.xarajat_turi !== 'Kirim_Moliya'), {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, PackageX } from 'lucide-react';
+import { AlertTriangle, PackageX, Wrench } from 'lucide-react';
 import { getUser, canViewReports } from '@/lib/auth-client';
 import { apiFetch } from '@/lib/api-client';
 import { formatNumber } from '@/lib/format';
@@ -17,6 +17,7 @@ interface Car { id: number; texnik_holat: string; }
 interface CarDoc { id: number; hujjat_turi: string; davlat_raqami: string; tur: string; qolgan_kun: number; }
 interface Mahsulot { id: number; nomi: string; joriy_qoldiq: string; minimal_qoldiq: string; olchov_birligi: string; }
 interface Tx { turi: string; valyuta: string; summa: string; created_at: string }
+interface Holat { davlat_raqami: string; tur: string; qism_nomi: string; holat: string; qolgan_masofa: number; }
 
 function toDateInputValue(d: Date) { return d.toISOString().slice(0, 10); }
 
@@ -28,16 +29,18 @@ export default function DashboardPage() {
   const [expiringDocs, setExpiringDocs] = useState<CarDoc[]>([]);
   const [lowStock, setLowStock] = useState<Mahsulot[]>([]);
   const [weekly, setWeekly] = useState<Tx[]>([]);
+  const [xizmatHolatlari, setXizmatHolatlari] = useState<Holat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const dan = toDateInputValue(new Date(Date.now() - 6 * 24 * 3600 * 1000));
-      const [carsRes, docsRes, omborRes, txRes] = await Promise.all([
+      const [carsRes, docsRes, omborRes, txRes, xizmatRes] = await Promise.all([
         apiFetch<Car[]>('/api/cars'),
         apiFetch<CarDoc[]>('/api/car-documents?expiring_days=10'),
         apiFetch<Mahsulot[]>('/api/ombor/mahsulotlar'),
         apiFetch<Tx[]>('/api/transactions?dan=' + dan),
+        apiFetch<Holat[]>('/api/tamirlash-normalari/holatlar'),
       ]);
       if (carsRes.success && carsRes.data) setCars(carsRes.data);
       if (docsRes.success && docsRes.data) setExpiringDocs(docsRes.data);
@@ -45,6 +48,9 @@ export default function DashboardPage() {
         setLowStock(omborRes.data.filter((m) => Number(m.joriy_qoldiq) <= Number(m.minimal_qoldiq)));
       }
       if (txRes.success && txRes.data) setWeekly(txRes.data);
+      if (xizmatRes.success && xizmatRes.data) {
+        setXizmatHolatlari(xizmatRes.data.filter((h) => h.holat === 'Kechikkan'));
+      }
       setLoading(false);
     }
     load();
@@ -94,7 +100,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2) Kritik ogohlantirishlar */}
-      {(expiringDocs.length > 0 || lowStock.length > 0) && (
+      {(expiringDocs.length > 0 || lowStock.length > 0 || xizmatHolatlari.length > 0) && (
         <>
           <h2 style={{ marginTop: 24, marginBottom: 12 }}>Kritik ogohlantirishlar</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -110,6 +116,12 @@ export default function DashboardPage() {
               <div key={'stock-' + m.id} className="alert" style={{ background: 'var(--warning-bg)', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
                 <PackageX size={16} />
                 <span><b>{m.nomi}</b>: omborda kam qoldi ({formatNumber(m.joriy_qoldiq)} {m.olchov_birligi})</span>
+              </div>
+            ))}
+            {xizmatHolatlari.map((h, i) => (
+              <div key={'xizmat-' + i} className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
+                <Wrench size={16} />
+                <span><b>{h.tur} — {h.davlat_raqami}</b>: {h.qism_nomi} muddati {formatNumber(Math.abs(h.qolgan_masofa))} km oldin o'tgan</span>
               </div>
             ))}
           </div>

@@ -24,7 +24,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (data.success) {
-        saveSession(data.data.token, data.data.user);
+        saveSession(data.data.user);
         router.push('/dashboard');
       } else {
         setError(data.error?.message || 'Login xatosi');

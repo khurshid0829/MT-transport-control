@@ -1,16 +1,17 @@
 import { UserRole } from '../lib/auth';
 import { AppError } from '../lib/AppError';
 
-export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates' | 'ombor_mahsulotlari' | 'ombor_harakatlari' | 'car_documents';
+export type Resource = 'users' | 'cars' | 'drivers' | 'transactions' | 'audit' | 'reports' | 'exchange_rates' | 'ombor_mahsulotlari' | 'ombor_harakatlari' | 'car_documents' | 'tamirlash_normalari';
 export type Action = 'create' | 'read' | 'update' | 'delete';
 
 /**
  * MARKAZIY RUXSATLAR MATRITSASI
  * ------------------------------------------------------------------
- * ANIQ TALAB (1-qoida):
- *  - transactions.create/update/delete -> FAQAT CHIEF_MECHANIC
- *    (MECHANIC ham, FOUNDER ham, MANAGER ham YOZISH huquqiga ega emas —
- *     FOUNDER/MANAGER faqat GET/o'qish huquqiga ega)
+ * TARIX: dastlab (1-qoida) transactions faqat CHIEF_MECHANIC uchun
+ * yozilardi. Loyiha davomida foydalanuvchi ATAYLAB va OCHIQ tasdiqlash
+ * bilan MANAGER'ga ham moliyaviy va ombor yozish huquqini berdi (2026-
+ * yil, "rasman o'zgartiraman" tasdig'i bilan). Bu — qoidaning rasmiy
+ * yangilanishi, xato emas.
  */
 const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
   users: {
@@ -32,10 +33,10 @@ const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
     delete: ['FOUNDER', 'MANAGER'],
   },
   transactions: {
-    create: ['CHIEF_MECHANIC'],
+    create: ['CHIEF_MECHANIC', 'MANAGER'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
-    update: ['CHIEF_MECHANIC'],
-    delete: ['CHIEF_MECHANIC'],
+    update: ['CHIEF_MECHANIC', 'MANAGER'],
+    delete: ['CHIEF_MECHANIC', 'MANAGER'],
   },
   audit: {
     read: ['FOUNDER'],
@@ -47,20 +48,23 @@ const PERMISSIONS: Record<Resource, Partial<Record<Action, UserRole[]>>> = {
     create: ['FOUNDER', 'MANAGER'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
-  // Ombor katalogi (mahsulot turlarini belgilash) — avto turlari kabi,
-  // FOUNDER/MANAGER boshqaradi.
+  // Ombor katalogi — endi CHIEF_MECHANIC ham yangi mahsulot turi qo'sha oladi
   ombor_mahsulotlari: {
-    create: ['FOUNDER', 'MANAGER'],
+    create: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
-  // Ombor harakatlari (kirim/chiqim) — transactions bilan bir xil mantiq:
-  // faqat CHIEF_MECHANIC moddiy qiymatlarni kirita oladi.
+  // Ombor harakatlari (kirim/chiqim) — endi MANAGER ham kirita oladi
   ombor_harakatlari: {
-    create: ['CHIEF_MECHANIC'],
+    create: ['CHIEF_MECHANIC', 'MANAGER'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },
-  // Avto hujjatlari (sug'urta, texnik ko'rik va h.k.) — cars bilan bir xil mantiq
+  // Avto hujjatlari — endi CHIEF_MECHANIC ham qo'sha oladi
   car_documents: {
+    create: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC'],
+    read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
+  },
+  // Texnik xizmat normalari (moy/ehtiyot qism almashtirish oralig'i) katalogi
+  tamirlash_normalari: {
     create: ['FOUNDER', 'MANAGER'],
     read: ['FOUNDER', 'MANAGER', 'CHIEF_MECHANIC', 'MECHANIC'],
   },

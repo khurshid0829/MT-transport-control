@@ -520,3 +520,51 @@ CREATE TRIGGER trg_audit_car_documents
 -- Avto operatsion holatiga "Zaxirada" (rezerv) qo'shildi.
 -- ("Aktiv" qiymati o'zgarmaydi, lekin interfeysda "Liniyada" deb ko'rsatiladi)
 ALTER TYPE car_status ADD VALUE IF NOT EXISTS 'Zaxirada';
+
+-- =====================================================================
+-- 21. RUXSATLAR YANGILANISHI (foydalanuvchi tomonidan rasman tasdiqlangan):
+--     - MANAGER: transactions.create/update/delete + ombor_harakatlari.create
+--     - CHIEF_MECHANIC: car_documents.create + ombor_mahsulotlari.create
+--     (Bu yerda SQL o'zgarishi yo'q — bu faqat ilova (permissions.ts)
+--      darajasidagi o'zgarish, bazaga tegishli emas.)
+
+-- =====================================================================
+-- 22. TEXNIK XIZMAT NORMALARI — moy/ehtiyot qism qanday oraliqda
+--     (necha km'da) almashtirilishi kerakligini belgilaydi, va har bir
+--     avto uchun "muddatidan oldin / o'z vaqtida / kechikkan" holatini
+--     kuzatish imkonini beradi.
+-- =====================================================================
+CREATE TABLE tamirlash_normalari (
+    id            SERIAL PRIMARY KEY,
+    nomi          VARCHAR(100) NOT NULL UNIQUE,   -- masalan: "Motor moyi", "Tormoz kolodkalari"
+    interval_km   INT NOT NULL CHECK (interval_km > 0),
+    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tranzaksiya kiritilganda (Ta'mirlash/Ehtiyot qism/Moy) qaysi normaga
+-- tegishli qism almashtirilgani (ixtiyoriy) belgilanadi.
+ALTER TABLE transactions
+    ADD COLUMN almashtirilgan_qism_id INT REFERENCES tamirlash_normalari(id);
+
+CREATE TRIGGER trg_audit_tamirlash_normalari
+    AFTER INSERT OR UPDATE OR DELETE ON tamirlash_normalari
+    FOR EACH ROW EXECUTE FUNCTION log_audit_trail();
+
+-- =====================================================================
+-- 21. AUDIT LOG DAXLSIZLIGI (Immutable Audit Log)
+--     audit_log jadvali FAQAT INSERT (append-only) bo'lishi shart —
+--     hech kim (admin ham) tarixni o'zgartira yoki o'chira olmaydi.
+-- =====================================================================
+CREATE OR REPLACE FUNCTION trg_prevent_audit_modification() RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'Audit log yozuvlarini o''zgartirish yoki o''chirish mutlaqo taqiqlangan!';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER prevent_audit_update
+    BEFORE UPDATE ON audit_log
+    FOR EACH ROW EXECUTE FUNCTION trg_prevent_audit_modification();
+
+CREATE TRIGGER prevent_audit_delete
+    BEFORE DELETE ON audit_log
+    FOR EACH ROW EXECUTE FUNCTION trg_prevent_audit_modification();

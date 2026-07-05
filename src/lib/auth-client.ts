@@ -10,17 +10,18 @@ export interface AuthUser {
   status: string;
 }
 
-const TOKEN_KEY = 'mt_token';
 const USER_KEY = 'mt_user';
 
-export function saveSession(token: string, user: AuthUser) {
-  localStorage.setItem(TOKEN_KEY, token);
+/**
+ * MUHIM (Session Hijacking himoyasi): token endi bu yerda SAQLANMAYDI.
+ * Haqiqiy autentifikatsiya httpOnly cookie orqali (brauzer JS'iga
+ * ko'rinmaydigan holda) amalga oshiriladi — server buni avtomatik
+ * tekshiradi. Bu yerda faqat UI'ni tezroq chizish uchun (masalan ism va
+ * rolni darhol ko'rsatish) foydalanuvchi profili (maxfiy bo'lmagan)
+ * saqlanadi.
+ */
+export function saveSession(user: AuthUser) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
 }
 
 export function getUser(): AuthUser | null {
@@ -30,7 +31,6 @@ export function getUser(): AuthUser | null {
 }
 
 export function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
@@ -42,10 +42,19 @@ export function clearSession() {
  * tajribasi uchun (masalan "Tranzaksiya qo'shish" tugmasini ko'rsatmaslik).
  */
 export function canWriteTransactions(role: UserRole | undefined): boolean {
-  return role === 'CHIEF_MECHANIC';
+  return role === 'CHIEF_MECHANIC' || role === 'MANAGER';
 }
 export function canWriteCars(role: UserRole | undefined): boolean {
   return role === 'FOUNDER' || role === 'MANAGER';
+}
+export function canManageOmborCatalog(role: UserRole | undefined): boolean {
+  return role === 'FOUNDER' || role === 'MANAGER' || role === 'CHIEF_MECHANIC';
+}
+export function canMoveOmborStock(role: UserRole | undefined): boolean {
+  return role === 'CHIEF_MECHANIC' || role === 'MANAGER';
+}
+export function canManageCarDocuments(role: UserRole | undefined): boolean {
+  return role === 'FOUNDER' || role === 'MANAGER' || role === 'CHIEF_MECHANIC';
 }
 export function canSetExchangeRate(role: UserRole | undefined): boolean {
   return role === 'FOUNDER' || role === 'MANAGER';

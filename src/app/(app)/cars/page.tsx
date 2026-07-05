@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
-import { getUser, canWriteCars } from '@/lib/auth-client';
+import { getUser, canWriteCars, canManageCarDocuments } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
 import PlateNumberInput from '@/components/PlateNumberInput';
@@ -37,6 +37,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function CarsPage() {
   const user = getUser();
   const canWrite = canWriteCars(user?.rol);
+  const canDocs = canManageCarDocuments(user?.rol);
 
   const [cars, setCars] = useState<Car[]>([]);
   const [carTypes, setCarTypes] = useState<string[]>([]);
@@ -217,7 +218,7 @@ export default function CarsPage() {
         </CollapsibleCard>
       )}
 
-      {canWrite && (
+      {canDocs && (
         <CollapsibleCard open={showDocForm} onToggle={() => setShowDocForm((v) => !v)} title="Avto hujjati qo'shish (Sug'urta, Texnik ko'rik va h.k.)">
           {docError && <div className="alert alert-error">{docError}</div>}
           <form onSubmit={handleCreateDoc}>

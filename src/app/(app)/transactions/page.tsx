@@ -30,6 +30,7 @@ export default function TransactionsPage() {
 
   const [txs, setTxs] = useState<Tx[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
+  const [normalar, setNormalar] = useState<{ id: number; nomi: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,17 +38,19 @@ export default function TransactionsPage() {
 
   const [form, setForm] = useState({
     turi: 'Chiqim', valyuta: 'UZS', summa: '', avto_id: '', xarajat_turi: XARAJAT_TURLARI[0],
-    amaldagi_yurgan_masofa: '', tavsif: '',
+    amaldagi_yurgan_masofa: '', almashtirilgan_qism_id: '', tavsif: '',
   });
 
   async function loadAll() {
     setLoading(true);
-    const [txRes, carsRes] = await Promise.all([
+    const [txRes, carsRes, normRes] = await Promise.all([
       apiFetch<Tx[]>('/api/transactions'),
       apiFetch<Car[]>('/api/cars'),
+      apiFetch<{ id: number; nomi: string }[]>('/api/tamirlash-normalari'),
     ]);
     if (txRes.success && txRes.data) setTxs(txRes.data);
     if (carsRes.success && carsRes.data) setCars(carsRes.data);
+    if (normRes.success && normRes.data) setNormalar(normRes.data);
     setLoading(false);
   }
 
@@ -75,12 +78,13 @@ export default function TransactionsPage() {
     if (form.avto_id) body.avto_id = Number(form.avto_id);
     if (form.tavsif) body.tavsif = form.tavsif;
     if (needsMileage && form.amaldagi_yurgan_masofa) body.amaldagi_yurgan_masofa = Number(form.amaldagi_yurgan_masofa);
+    if (needsMileage && form.almashtirilgan_qism_id) body.almashtirilgan_qism_id = Number(form.almashtirilgan_qism_id);
 
     const res = await apiFetch<Tx>('/api/transactions', { method: 'POST', body: JSON.stringify(body) });
     setSaving(false);
     if (res.success) {
       setShowForm(false);
-      setForm({ turi: 'Chiqim', valyuta: 'UZS', summa: '', avto_id: '', xarajat_turi: XARAJAT_TURLARI[0], amaldagi_yurgan_masofa: '', tavsif: '' });
+      setForm({ turi: 'Chiqim', valyuta: 'UZS', summa: '', avto_id: '', xarajat_turi: XARAJAT_TURLARI[0], amaldagi_yurgan_masofa: '', almashtirilgan_qism_id: '', tavsif: '' });
       loadAll();
     } else {
       setError(res.error?.message || 'Xatolik yuz berdi');

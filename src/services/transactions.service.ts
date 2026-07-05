@@ -30,9 +30,9 @@ export const transactionsService = {
   async create(input: any, userId: number) {
     return withTransaction(userId, async (client) => {
       const result = await client.query(
-        `INSERT INTO transactions (turi, valyuta, summa, avto_id, xarajat_turi, amaldagi_yurgan_masofa, tavsif, kim_kiritdi)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [input.turi, input.valyuta, input.summa, input.avto_id ?? null, input.xarajat_turi, input.amaldagi_yurgan_masofa ?? null, input.tavsif ?? null, userId]
+        `INSERT INTO transactions (turi, valyuta, summa, avto_id, xarajat_turi, amaldagi_yurgan_masofa, almashtirilgan_qism_id, tavsif, kim_kiritdi)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [input.turi, input.valyuta, input.summa, input.avto_id ?? null, input.xarajat_turi, input.amaldagi_yurgan_masofa ?? null, input.almashtirilgan_qism_id ?? null, input.tavsif ?? null, userId]
       );
       return result.rows[0];
     });

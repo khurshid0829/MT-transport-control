@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
-import { getUser } from '@/lib/auth-client';
+import { getUser, canManageOmborCatalog, canMoveOmborStock } from '@/lib/auth-client';
 import { formatNumber } from '@/lib/format';
 import NumberInput from '@/components/NumberInput';
 import CollapsibleCard from '@/components/CollapsibleCard';
@@ -21,17 +21,10 @@ interface Car { id: number; davlat_raqami: string; tur: string; }
 const TOIFALAR = ['Ehtiyot qism', "Yoqilg'i", 'Moy', 'Boshqa'];
 const BIRLIKLAR = ['dona', 'litr', 'kg'];
 
-function canManageCatalog(rol: string | undefined) {
-  return rol === 'FOUNDER' || rol === 'MANAGER';
-}
-function canMoveStock(rol: string | undefined) {
-  return rol === 'CHIEF_MECHANIC';
-}
-
 export default function OmborPage() {
   const user = getUser();
-  const canCatalog = canManageCatalog(user?.rol);
-  const canMove = canMoveStock(user?.rol);
+  const canCatalog = canManageOmborCatalog(user?.rol);
+  const canMove = canMoveOmborStock(user?.rol);
 
   const [mahsulotlar, setMahsulotlar] = useState<Mahsulot[]>([]);
   const [harakatlar, setHarakatlar] = useState<Harakat[]>([]);
